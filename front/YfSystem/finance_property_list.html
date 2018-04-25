@@ -1,0 +1,107 @@
+<link rel="stylesheet" type="text/css" href="easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="easyui/themes/bootstrap/easyui.css">
+<script type="text/javascript" src="easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="easyui/locale/easyui-lang-zh_CN.js"></script>
+<style type="text/css">
+	.layui-form-label {width: auto;}
+	span#total{float: right;padding:0px 5px;line-height: 18px;margin-top: 10px;}
+	form{padding-top: 15px !important;padding-left: 15px !important;}
+	.panel{margin-bottom: 10px;}
+</style>
+<div class="panel admin-panel">
+	<div class="panel-head">
+		<strong><span class="icon-pencil-square-o"></span>资产负债情况</strong>
+	</div>
+	<div class="panel-body">
+		<form class="layui-form" action="">
+			<div class="layui-form-item">
+				<div class="layui-input-inline">
+					<input type="text" name="transactionTime" id="time" autocomplete="off" placeholder="选择时间" class="layui-input">
+				</div>
+				<div class="layui-input-inline">
+					<button type="submit" class="button bg-yellow" lay-submit='' lay-filter="query">查询</button>
+					<a class="button bg-main" href="#">导出</a>
+					<a class="button bg-green" href="javascript:$('.datagrid').print()">打印</a>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+<table id="list"></table>
+
+<script type="text/javascript">
+	layui.use(['form','laydate'], function() {
+		var form = layui.form,
+			table = layui.table,
+			laydate = layui.laydate;
+    	var date = new Date();
+
+		var config = function(data){
+			var fileArray = [];
+
+            for (var i = 0;i < data.length;i++){
+                    fileArray.push({
+                        scode : data[i].subjectCode,
+                        name : data[i].subjectName,
+                        id : data[i].subjectId,
+                        ncs : data[i].ncs,
+                        dysr : data[i].dysr,
+                        dyzc : data[i].dyzc,
+                        dnsr : data[i].dnsr,
+                        dnzc : data[i].dnzc,
+                        qms : data[i].qms,
+                        _parentId : data[i].parentId
+                    })
+                }
+
+            $('#list').treegrid({
+	    		idField: 'scode',
+                treeField: 'name',
+                animate:true,
+                fitColumns:true,
+                lines: true,
+	    		columns: [[
+                    {field: 'scode',title:'科目编号',width:80},
+                    {field: 'name',title:'科目名称',width:200},
+                    {field: 'ncs',title:'年初数', width:70},
+                    {field: 'dysr',title:'期末数', width:70},
+	    		]],
+	    		onClickRow:function(row){
+	  			
+	    		},
+	  			data:{
+	  				total: fileArray.length,
+                    rows : fileArray
+	  			}
+	    	});
+		}
+
+		
+		//treegrid部分
+		!function(){
+			var data = {
+            	userToken: loader.getCookie('token'),
+            	transactionTime:date.getFullYear()
+            }
+			fun.post(loader.baseurl+'/cwtz/zcfzList',data,function(rs){
+                config(rs.data);
+	    	})
+		}();
+
+		//数据筛选
+		form.on('submit(query)',function(obj){
+			obj.field.userToken = loader.getCookie('token');
+            fun.post(loader.baseurl + '/cwtz/zcfzList',obj.field, function(rs) {
+                config(rs.data);
+            })
+			return false;
+		});
+		
+		laydate.render({
+			elem: '#time',
+			format:'yyyy',
+            value:date.getFullYear()
+		});
+		
+	});
+</script>

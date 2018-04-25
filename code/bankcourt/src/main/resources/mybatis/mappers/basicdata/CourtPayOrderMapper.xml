@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.born.bc.basicdata.dao.CourtPayOrderMapper" >
+  <resultMap id="BaseResultMap" type="com.born.bc.basicdata.entity.CourtPayOrder" >
+    <id column="ID" property="id" jdbcType="VARCHAR" />
+    <result column="CASE_ID" property="caseId" jdbcType="VARCHAR" />
+    <result column="CASE_NUMBER" property="caseNumber" jdbcType="VARCHAR" />
+    <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+    <result column="DATE" property="date" jdbcType="TIMESTAMP" />
+    <result column="DETAIL_TITLE" property="detailTitle" jdbcType="VARCHAR" />
+    <result column="PAYMENT__DEPOSIT_BANK" property="paymentDepositBank" jdbcType="VARCHAR" />
+    <result column="PAYMENT_NUMBER" property="paymentNumber" jdbcType="VARCHAR" />
+    <result column="PAYMENT_NAME" property="paymentName" jdbcType="VARCHAR" />
+    <result column="RECEIVABLES_DEPOSIT_BANK" property="receivablesDepositBank" jdbcType="VARCHAR" />
+    <result column="RECEIVABLES_PROVINCE" property="receivablesProvince" jdbcType="VARCHAR" />
+    <result column="RECEIVABLES_CITY" property="receivablesCity" jdbcType="VARCHAR" />
+    <result column="RECEIVABLES_AREA_CODE" property="receivablesAreaCode" jdbcType="VARCHAR" />
+    <result column="RECEIVABLES_NUMBER" property="receivablesNumber" jdbcType="VARCHAR" />
+    <result column="RECEIVABLES_ACCOUNT_NAME" property="receivablesAccountName" jdbcType="VARCHAR" />
+    <result column="AMOUNT" property="amount" jdbcType="DECIMAL" />
+    <result column="REMITTANCE_PURPOSE" property="remittancePurpose" jdbcType="VARCHAR" />
+    <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+    <result column="REMITTANCE_MODE" property="remittanceMode" jdbcType="VARCHAR" />
+    <result column="RECEIVABLES_PHONE" property="receivablesPhone" jdbcType="VARCHAR" />
+    <result column="FORMMAKER_ID" property="formmakerId" jdbcType="VARCHAR" />
+    <result column="FORMMAKER_NAME" property="formmakerName" jdbcType="VARCHAR" />
+    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="LAST_MODIFIED_TIME" property="lastModifiedTime" jdbcType="TIMESTAMP" />
+    <result column="DEL_STATUS" property="delStatus" jdbcType="INTEGER" />
+    <result column="INTER_AMOUNT" property="interAmount" jdbcType="DECIMAL" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ID, CASE_ID, CASE_NUMBER, CURRENCY, DATE, DETAIL_TITLE, PAYMENT__DEPOSIT_BANK, PAYMENT_NUMBER, 
+    PAYMENT_NAME, RECEIVABLES_DEPOSIT_BANK, RECEIVABLES_PROVINCE, RECEIVABLES_CITY, RECEIVABLES_AREA_CODE, 
+    RECEIVABLES_NUMBER, RECEIVABLES_ACCOUNT_NAME, AMOUNT, REMITTANCE_PURPOSE, REMARKS, 
+    REMITTANCE_MODE, RECEIVABLES_PHONE, FORMMAKER_ID, FORMMAKER_NAME, CREATE_TIME, DEL_STATUS
+  </sql>
+  
+  <update id="cleanCaseInfoByCaseId" parameterType="java.lang.String">
+  	update t_court_pay_order set CASE_ID='' ,CASE_NUMBER='' where CASE_ID = #{caseId,jdbcType=VARCHAR}
+  </update>
+  
+  <select id="selectByList" parameterType="com.born.bc.basicdata.entity.CourtPayOrderParamDto" resultMap="BaseResultMap">
+  	select 
+  	a.ID, CASE_ID, CASE_NUMBER, CURRENCY, DATE, DETAIL_TITLE, PAYMENT__DEPOSIT_BANK, PAYMENT_NUMBER, 
+    PAYMENT_NAME, RECEIVABLES_DEPOSIT_BANK, RECEIVABLES_PROVINCE, RECEIVABLES_CITY, RECEIVABLES_AREA_CODE, 
+    RECEIVABLES_NUMBER, RECEIVABLES_ACCOUNT_NAME, AMOUNT, REMITTANCE_PURPOSE, REMARKS, 
+    REMITTANCE_MODE, RECEIVABLES_PHONE, IFNULL(INTER_AMOUNT,0) "INTER_AMOUNT"
+    from t_court_pay_order a
+	LEFT JOIN (
+		SELECT
+			cp.ID,
+			(
+				IFNULL(it.DEBIT_PRICE, 0) - IFNULL(it.CREDIT_PRICE, 0)
+			) "INTER_AMOUNT"
+		FROM
+			t_dt_inter_pay it
+		INNER JOIN t_court_pay_order cp ON it.CASE_NUMBER = cp.CASE_NUMBER
+		AND it.PARTY_NUMBER = cp.RECEIVABLES_NUMBER
+		AND it.CORPORATE_NAME = cp.RECEIVABLES_ACCOUNT_NAME
+		AND (it.CREDIT_PRICE = cp.AMOUNT or it.DEBIT_PRICE = cp.AMOUNT)
+		GROUP BY
+			cp.ID
+	) b ON a.ID = b.ID
+    <where>
+    	DEL_STATUS = 0
+    	<if test="caseNumber != null and caseNumber != ''">
+    		and instr(CASE_NUMBER, #{caseNumber, jdbcType=VARCHAR}) &gt; 0
+    	</if>
+    	<if test="startDate != null">
+    		and DATE &gt;= #{startDate, jdbcType=TIMESTAMP}
+    	</if>
+    	<if test="endDate != null">
+    		and DATE &lt;= #{endDate, jdbcType=TIMESTAMP}
+    	</if>
+    	<if test="amount != null">
+    		and AMOUNT = #{amount,jdbcType=DECIMAL}
+    	</if>
+    	<if test="receivablesAccountName != null and receivablesAccountName != ''">
+    		and instr(RECEIVABLES_ACCOUNT_NAME, #{receivablesAccountName, jdbcType=VARCHAR}) &gt; 0
+    	</if>
+    </where>
+    order by CREATE_TIME desc
+  </select>
+  <update id="updateDelStatusByPrimaryKey" parameterType="java.util.List">
+  	update t_court_pay_order set DEL_STATUS = 1 , LAST_MODIFIED_TIME = current_timestamp() 
+  	<where>
+  		DEL_STATUS = 0
+  		AND ID in 
+	  	<foreach collection="ids" item="item" index="index" open="(" close=")" separator=",">
+	  		#{item,jdbcType=VARCHAR}
+	  	</foreach>
+  	</where>
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_court_pay_order
+    where ID = #{id,jdbcType=VARCHAR}
+  </select>
+  <insert id="insertSelective" parameterType="com.born.bc.basicdata.entity.CourtPayOrder" >
+    insert into t_court_pay_order
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        ID,
+      </if>
+      <if test="caseNumber != null" >
+      	CASE_ID,
+        CASE_NUMBER,
+      </if>
+      <if test="currency != null" >
+        CURRENCY,
+      </if>
+      <if test="date != null" >
+        DATE,
+      </if>
+      <if test="detailTitle != null" >
+        DETAIL_TITLE,
+      </if>
+      <if test="paymentDepositBank != null" >
+        PAYMENT__DEPOSIT_BANK,
+      </if>
+      <if test="paymentNumber != null" >
+        PAYMENT_NUMBER,
+      </if>
+      <if test="paymentName != null" >
+        PAYMENT_NAME,
+      </if>
+      <if test="receivablesDepositBank != null" >
+        RECEIVABLES_DEPOSIT_BANK,
+      </if>
+      <if test="receivablesProvince != null" >
+        RECEIVABLES_PROVINCE,
+      </if>
+      <if test="receivablesCity != null" >
+        RECEIVABLES_CITY,
+      </if>
+      <if test="receivablesAreaCode != null" >
+        RECEIVABLES_AREA_CODE,
+      </if>
+      <if test="receivablesNumber != null" >
+        RECEIVABLES_NUMBER,
+      </if>
+      <if test="receivablesAccountName != null" >
+        RECEIVABLES_ACCOUNT_NAME,
+      </if>
+      <if test="amount != null" >
+        AMOUNT,
+      </if>
+      <if test="remittancePurpose != null" >
+        REMITTANCE_PURPOSE,
+      </if>
+      <if test="remarks != null" >
+        REMARKS,
+      </if>
+      <if test="remittanceMode != null" >
+        REMITTANCE_MODE,
+      </if>
+      <if test="receivablesPhone != null" >
+        RECEIVABLES_PHONE,
+      </if>
+      <if test="formmakerId != null" >
+        FORMMAKER_ID,
+      </if>
+      <if test="formmakerName != null" >
+        FORMMAKER_NAME,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="caseNumber != null" >
+      	#{caseId,jdbcType=VARCHAR},
+        #{caseNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="currency != null" >
+        #{currency,jdbcType=VARCHAR},
+      </if>
+      <if test="date != null" >
+        #{date,jdbcType=TIMESTAMP},
+      </if>
+      <if test="detailTitle != null" >
+        #{detailTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentDepositBank != null" >
+        #{paymentDepositBank,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentNumber != null" >
+        #{paymentNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentName != null" >
+        #{paymentName,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesDepositBank != null" >
+        #{receivablesDepositBank,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesProvince != null" >
+        #{receivablesProvince,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesCity != null" >
+        #{receivablesCity,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesAreaCode != null" >
+        #{receivablesAreaCode,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesNumber != null" >
+        #{receivablesNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesAccountName != null" >
+        #{receivablesAccountName,jdbcType=VARCHAR},
+      </if>
+      <if test="amount != null" >
+        #{amount,jdbcType=DECIMAL},
+      </if>
+      <if test="remittancePurpose != null" >
+        #{remittancePurpose,jdbcType=VARCHAR},
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="remittanceMode != null" >
+        #{remittanceMode,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesPhone != null" >
+        #{receivablesPhone,jdbcType=VARCHAR},
+      </if>
+      <if test="formmakerId != null" >
+        #{formmakerId,jdbcType=VARCHAR},
+      </if>
+      <if test="formmakerName != null" >
+        #{formmakerName,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.born.bc.basicdata.entity.CourtPayOrder" >
+    update t_court_pay_order
+    <set >
+      <if test="caseNumber != null" >
+      	CASE_ID = #{caseId,jdbcType=VARCHAR},
+        CASE_NUMBER = #{caseNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="currency != null" >
+        CURRENCY = #{currency,jdbcType=VARCHAR},
+      </if>
+      <if test="date != null" >
+        DATE = #{date,jdbcType=TIMESTAMP},
+      </if>
+      <if test="detailTitle != null" >
+        DETAIL_TITLE = #{detailTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentDepositBank != null" >
+        PAYMENT__DEPOSIT_BANK = #{paymentDepositBank,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentNumber != null" >
+        PAYMENT_NUMBER = #{paymentNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentName != null" >
+        PAYMENT_NAME = #{paymentName,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesDepositBank != null" >
+        RECEIVABLES_DEPOSIT_BANK = #{receivablesDepositBank,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesProvince != null" >
+        RECEIVABLES_PROVINCE = #{receivablesProvince,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesCity != null" >
+        RECEIVABLES_CITY = #{receivablesCity,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesAreaCode != null" >
+        RECEIVABLES_AREA_CODE = #{receivablesAreaCode,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesNumber != null" >
+        RECEIVABLES_NUMBER = #{receivablesNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesAccountName != null" >
+        RECEIVABLES_ACCOUNT_NAME = #{receivablesAccountName,jdbcType=VARCHAR},
+      </if>
+      <if test="amount != null" >
+        AMOUNT = #{amount,jdbcType=DECIMAL},
+      </if>
+      <if test="remittancePurpose != null" >
+        REMITTANCE_PURPOSE = #{remittancePurpose,jdbcType=VARCHAR},
+      </if>
+      <if test="remarks != null" >
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="remittanceMode != null" >
+        REMITTANCE_MODE = #{remittanceMode,jdbcType=VARCHAR},
+      </if>
+      <if test="receivablesPhone != null" >
+        RECEIVABLES_PHONE = #{receivablesPhone,jdbcType=VARCHAR},
+      </if>
+        LAST_MODIFIED_TIME = current_timestamp()
+    </set>
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

@@ -1,0 +1,197 @@
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    .laydate-theme-exist td.layui-this {
+        background-color: white !important;
+        color: #666 !important
+    }
+    
+    .layui-table-cell {
+        height: auto !important
+    }
+    
+    div.split {
+        height: 100%;
+        width: 100%;
+        position: fixed;
+        bottom: 0px;
+        top: 0px;
+        left: 0px;
+        right: 0px;
+        background: url(images/shade.png) repeat;
+        display: none;
+        z-index: 9999;
+    }
+    
+    div.split form {
+        width: 800px;
+        height: 500px;
+        position: relative;
+        left: 50%;
+        margin-left: -400px;
+        top: 50%;
+        margin-top: -250px;
+        background: white;
+        box-sizing: border-box;
+        border-radius: 5px;
+        padding: 50px 30px;
+        overflow: auto;
+    }
+</style>
+<script type="text/html" id="num_tpl">
+    {{loader.send_data++}}
+</script>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>银行维护管理</strong>
+    </div>
+    <div class="panel-body">
+        <form class="layui-form" id="filter" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">银行名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="bankName" autocomplete="off" placeholder="银行名称" class="layui-input">
+                </div>
+                <label class="layui-form-label">银行账号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="bankAccount" autocomplete="off" placeholder="银行账号" class="layui-input">
+                </div>
+                <div class="layui-input-inline">
+                    <button type="submit" lay-submit="" class="button bg-mix" lay-filter="query">提交查询</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="panel-head">
+        <a class="button bg-main" href="javascript:loader.load('#admin_container','data_bank_add.html')">新增银行</a>
+    </div>
+</div>
+<table class="layui-hide" id="list" lay-filter="bank"></table>
+<script type="text/html" id='handle'>
+    <button class="border-blue button button-little" lay-event="edit">编辑</button>
+    <button class="border-red button button-little" lay-event="del">删除</button>
+</script>
+<script type="text/javascript">
+    layui.use(['form', 'table', 'laydate'], function() {
+        var form = layui.form,
+            table = layui.table,
+            laydate = layui.laydate;
+        form.render();
+        loader.send_data = 1;
+        // 置空临时参数
+        loader.temp_data = "";
+
+        $('input[name=caseNumber]').val(loader.resp_data.caseNumber || '');
+
+        form.on('select', function(data) {
+            $(data.elem).prev().val($(data.elem).find('option:selected').text());
+        });
+
+        var config = {
+            elem: '#list',
+            where: {
+                userToken: loader.getCookie('token')
+            },
+            url: loader.baseurl + '/bankManager/list',
+            page: true,
+            limit: 10,
+            cols: [
+                [{
+                    templet: '#num_tpl',
+                    width: 80,
+                    title: '序号'
+                }, {
+                    field: 'bankName',
+                    width: 280,
+                    title: '银行名称'
+                }, {
+                    field: 'bankAccount',
+                    width: 280,
+                    title: '银行账号'
+                }, {
+                    field: 'comments',
+                    width: 350,
+                    title: '备注信息'
+                }, {
+                    width: 160,
+                    title: '操作',
+                    toolbar: '#handle'
+                }]
+            ],
+            response: {
+                statusCode: 1,
+            },
+            done: function(res) {
+                loader.send_data = 1;
+                loader.fail(res);
+            }
+        };
+
+        var bank_list = table.render(config);
+
+        form.on('submit(query)', function(obj) {
+            config.where = obj.field;
+            bank_list.reload(config);
+            return false;
+        });
+
+        laydate.render({
+            elem: '#start',
+            value: loader.resp_data.startDateStr || ''
+        });
+        laydate.render({
+            elem: '#end',
+            value: loader.resp_data.endDateStr || ''
+        });
+
+        table.on('tool(bank)', function(obj) {
+            if (obj.event === 'edit') { //编辑
+                loader.temp_data = obj.data;
+                loader.resp_data = loader.serialize('#filter');
+                loader.load('#admin_container', 'data_bank_edit.html');
+            }
+            if (obj.event === 'del') { //删除
+                loader.resp_data = loader.serialize('#filter');
+                layer.confirm('确定删除这条数据吗？', {
+                    icon: 3,
+                    title: '系统提示'
+                }, function(index) {
+                    layer.close(index);
+                    layer.load();
+                    fun.post(loader.baseurl + '/bankManager/delete', [obj.data.id], function(res) {
+                        done(res, '删除成功', '删除失败');
+                    });
+                });
+            }
+        })
+
+        /**
+         * 请求成功的处理函数
+         * @param res 结果集
+         * @param success 成功提示
+         * @param fail 失败提示
+         * **/
+        var done = function(res, success, fail) {
+            layer.closeAll('loading');
+            var msg = res.msg || (res.code == 1 ? success : fail);
+            layer.msg(msg, {
+                icon: res.code,
+            	end:function() {
+                if (res.code == 1)
+                    loader.load('#admin_container', 'data_bank_maintain.html'); //刷新当前页面
+            }});
+        };
+
+        loader.resp_data = {};
+
+    });
+</script>

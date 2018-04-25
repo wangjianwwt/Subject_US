@@ -1,0 +1,254 @@
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    
+    .layui-table-cell {
+        height: auto !important
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    #tree_box {
+        border: solid 1px #C2C2C2;
+        position: absolute !important;
+        height: auto;
+        overflow: auto;
+        z-index: 9999 !important;
+        background: white;
+        width: 100%;
+        margin-top: 3px;
+        overflow-x: scroll;
+        display: none;
+    }
+    
+    .sub {
+        position: relative;
+    }
+    
+    .layui-tree li {
+        overflow: inherit !important;
+    }
+    
+    #tree {
+        cursor: pointer;
+    }
+    
+    form {
+        padding-top: 15px !important;
+        padding-left: 15px !important;
+    }
+    
+    .panel {
+        margin-bottom: 10px;
+        overflow: initial;
+    }
+    
+    .panel-body {
+        overflow: initial !important;
+    }
+    
+    .layui-form-item .layui-input-inline {
+        width: auto !important;
+    }
+</style>
+<script type="text/html" id="num_tpl">
+    {{loader.send_data++}}
+</script>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>科目明细统计</strong>
+    </div>
+    <div class="panel-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <div class="layui-input-inline">
+                    <input type="text" name="transactionTime" id="time" autocomplete="off" placeholder="选择时间" class="layui-input">
+                </div>
+                <div class="layui-input-inline sub">
+                    <input type="hidden" name="subjectId" />
+                    <input type="text" readonly="readonly" id="tree" placeholder="选择科目" class="layui-input">
+                    <div id="tree_box">
+                        <ul id='subject'></ul>
+                    </div>
+                </div>
+                <div class="layui-input-inline">
+                    <button type="submit" class="button bg-yellow" lay-submit='' lay-filter="query">查询</button>
+                    <a class="button bg-main" href="#">导出</a>
+                    <a class="button bg-green"  href="javascript:print_data()" >打印</a>
+                    <button type="submit" class="button bg-mix" lay-submit="" lay-filter="count">结算</button>
+                    <!-- <a class="button bg-mix" href="javascript:loader.load('#admin_container','finance_subject_list.html')">刷新</a> -->
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<table lay-filter="role" id="list"></table>
+<script type="text/javascript">
+    layui.use(['form', 'table', 'laydate', 'tree'], function() {
+        var form = layui.form,
+            table = layui.table,
+            laydate = layui.laydate;
+        loader.send_data = 1;
+        var time = new Date();
+        var dt = time.getFullYear()+'-'+(time.getMonth()+1)+'-'+time.getDate();
+
+        $('#tree').click(function(e) {
+            e = e || window.event;
+            e.stopPropagation();
+            $(this).next().slideDown('fast');
+        });
+
+        $('#tree_box').click(function(e) {
+            e = e || window.event;
+            e.stopPropagation();
+            $(this).show();
+        });
+
+
+        $('body').click(function(e) {
+            e = e || window.event;
+            var target = e.target || e.srcElement;
+            if ($(target) != $('#tree') && $(target) != $('#tree_box')) {
+                $('#tree_box').slideUp('fast');
+            }
+        });
+
+        subject = new Vue({
+            el: '#subject',
+            data: {
+                subjects: !0,
+            },
+            methods: {
+
+            },
+            created: function() {
+                var that = this;
+                fun.get(loader.baseurl + '/subject/list', {
+                    userToken: loader.getCookie('token')
+                }, function(rs) {
+                    if (rs) {
+                        layui.tree({
+                            elem: '#subject',
+                            click: function(item) {
+                                $('#tree').val(item.name);
+                                $('input[name=subjectId]').val(item.id);
+                                $('#tree_box').slideUp('fast');
+                            },
+                            nodes: rs.data
+                        });
+                    }
+                });
+            },
+            updated: function() {
+                form.render('select');
+            }
+        });
+
+        var config = {
+            elem: '#list',
+            where: {
+                userToken: loader.getCookie('token'),
+                transactionTime: dt
+            },
+            url: loader.baseurl + '/cwtz/subjectList',
+            page: true,
+            limit: 10,
+            cols: [
+                [{
+                    width: 80,
+                    title: '序号',
+                    fixed: 'left',
+                    templet: '#num_tpl'
+                }, {
+                    field: 'transactionTime',
+                    width: 150,
+                    title: '日期'
+                }, {
+                    field: 'subjectName',
+                    width: 160,
+                    title: '科目名称'
+                }, {
+                    field: 'caseNumber',
+                    width: 200,
+                    title: '案号'
+                }, {
+                    field: 'corporateName',
+                    width: 280,
+                    title: '摘要'
+                }, {
+                    field: 'debitPrice',
+                    width: 200,
+                    title: '借方发生额'
+                }, {
+                    field: 'creditPrice',
+                    width: 200,
+                    title: '贷方发生额'
+                }, {
+                    field: 'balance',
+                    width: 200,
+                    title: '余额'
+                }]
+            ],
+            response: {
+                statusCode: 1,
+            },
+            done: function(res) {
+                loader.send_data = 1;
+                loader.fail(res);
+            }
+        };
+
+        var subject_list = table.render(config); //默认
+
+		//结算
+		form.on('submit(count)',function(obj){
+			layer.confirm('确定结算并锁定数据吗？',{icon:3,title:'系统提示'},function(index){
+            	layer.close(index);
+            	obj.field.userToken = loader.getCookie('token');
+				fun.get(loader.baseurl + '/cwtz/updateSfjs',obj.field, function(rs) {
+		            if(rs.msg === 'success') layer.msg('操作成功',{icon:1});
+		            else layer.alert('操作失败！',{icon:2});
+		        });
+           });
+			return false;
+		});
+
+        //数据筛选
+        form.on('submit(query)', function(obj) {
+            obj.field.userToken = loader.getCookie('token');
+            config.where = obj.field;
+            subject_list.reload(config);
+            return false;
+        });
+
+        table.on('tool(role)', function(obj) {
+            if (obj.event === 'del') {
+
+            }
+        });
+        
+        window.print_data = function(){
+			var tab_head = $('.layui-table-view').children(':first').find('thead');
+			var data_box = $('.layui-table-body.layui-table-main');
+			var content = $('body').children().detach();
+			data_box.children(':first').prepend(tab_head);
+			data_box.css('width',$('body').width());
+			$('body').append(data_box);
+			window.print();
+			$('body').empty().append(content);
+			subject_list.reload(config);
+        }
+
+        laydate.render({
+            elem: '#time',
+            value: new Date()
+        });
+        form.render();
+    });
+</script>

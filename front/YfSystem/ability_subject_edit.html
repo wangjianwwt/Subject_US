@@ -1,0 +1,174 @@
+<style type="text/css">
+	.layui-form-label {width: auto;}
+	span#total{float: right;padding:0px 5px;line-height: 18px;margin-top: 10px;}
+	.layui-this{background: #1184c3 !important;}
+	#tree_box {
+        border: solid 1px #C2C2C2;
+        position: absolute !important;
+        height: auto;
+        overflow: auto;
+        z-index: 9999 !important;
+        background: white;
+        width: 100%;
+        margin-top: 3px;
+        overflow-x: scroll;
+        display: none;
+    }
+    
+    .sub {
+        position: relative;
+    }
+    
+    .layui-tree li {
+        overflow: inherit !important;
+    }
+    
+    #tree {
+        cursor: pointer;
+    }
+</style>
+<div class="panel admin-panel" >
+	<div class="panel-head">
+		<strong><span class="icon-pencil-square-o"></span>编辑科目</strong>
+	</div>
+	<div class="panel-body" id="edit_ctrl">
+		<form class="layui-form" action="" >
+			<div class="layui-form-item" >
+    			<label class="layui-form-label">上级科目</label>
+    			<div class="layui-input-block sub">
+                    <input type="hidden" name="parent_id" v-model="subject._parentId"/>
+                    <input type="text" readonly="readonly" lay-verify="parent" id="tree" placeholder="请选择上级科目" class="layui-input">
+                    <div id="tree_box">
+                        <ul id='subject'></ul>
+                    </div>
+                </div>
+  			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">科目编号</label>
+				<div class="layui-input-block">
+					<input type="text" name="s_code" v-model="subject.scode" lay-verify="number|required" autocomplete="off" placeholder="请输入科目编号" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">科目名称</label>
+				<div class="layui-input-block">
+					<input type="text" name="s_name" v-model="subject.name" lay-verify="required" autocomplete="off" placeholder="请输入科目名称" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item" v-if="showQcs">
+				<label class="layui-form-label">期初数</label>
+				<div class="layui-input-block">
+					<input type="text" name="qcs" v-model="subject.qcs" autocomplete="off" placeholder="请输入期初数" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">选择类型</label>
+				<div class="layui-input-block">
+					<input type="radio" name="type" v-model="subject.type" value="100" title="100" checked="">
+   				   	<input type="radio" name="type" v-model="subject.type" value="200" title="200">
+				</div>
+			</div>
+			<div class="layui-form-item">
+    			<div class="layui-input-block">
+      				<button class="layui-btn" lay-submit="" lay-filter="edit">确认修改</button>
+      				<a class="layui-btn layui-btn-primary" href="javascript:loader.load('#admin_container','ability_subject_list.html')">返回</a>
+    			</div>
+  			</div>
+		</form>
+	</div>
+</div>
+
+<script type="text/javascript">
+	layui.use(['form','laydate','tree'], function() {
+		var form = layui.form,laydate = layui.laydate;
+		
+		$('body').off().on('click','#tree',function(e){
+			e = e || window.event;
+            e.stopPropagation();
+            $(this).next().slideDown('fast');
+		})
+		
+		$('body').on('click','#tree_box',function(e){
+			e = e || window.event;
+            e.stopPropagation();
+            $(this).show();
+		})
+
+        $('body').click(function(e) {
+            e = e || window.event;
+            var target = e.target || e.srcElement;
+            if ($(target) != $('#tree') && $(target) != $('#tree_box')) {
+                $('#tree_box').slideUp('fast');
+            }
+        });
+		
+		form.on('submit(edit)',function(obj){
+			var data = obj.field;
+			data.id = loader.temp_data.id;
+			data.userToken = loader.getCookie('token');
+			layer.load();
+			fun.post(loader.baseurl+'/subject/edit',data,function(res){
+				layer.closeAll('loading');
+				if(typeof(res)=='object'){
+					if(res.code==1){
+						layer.msg('修改科目成功！',{icon:1,end:function(){
+							$(obj.elem).next().get(0).click();
+						}});
+					}else{
+						layer.alert('修改科目失败！',{icon:2},function(i){
+//							obj.form.reset();
+							layer.close(i);
+						});
+					}
+				}
+			})
+			return false;
+		});
+		
+		form.verify({
+//			parent:function(val,el){
+//				if($.trim(val)==null||$.trim(val)==''||$.trim(val)==undefined)
+//				return '请选择上级科目';
+//			}
+		});
+		
+		edit_ctrl = new Vue({
+			el:"#edit_ctrl",
+			data:{
+				subject:loader.temp_data,
+				showQcs:false
+			},
+			methods:{
+				
+			},
+			created:function(){
+				var that = this;
+				if(!this.subject.children) this.showQcs = !0;
+				fun.get(loader.baseurl+'/subject/list',{userToken:loader.getCookie('token')},function(rs){
+					if (rs) {
+                        layui.tree({
+                            elem: '#subject',
+                            click: function(item) {
+                                $('#tree').val(item.name);
+                                $('input[name=parent_id]').val(item.pCode);
+                                $('#tree_box').slideUp('fast');
+                            },
+                            nodes: rs.data
+                        });
+                    }
+				});	
+				fun.get(loader.baseurl+'/subject/subjectList',{parent_id:loader.temp_data._parentId},function(rs){
+					if(rs){
+						$('#tree').val(rs.data.s_name);
+					}
+				});
+			},
+			updated:function(){
+				form.render('select');
+			}
+		});
+		
+		form.render();
+
+	});
+</script>

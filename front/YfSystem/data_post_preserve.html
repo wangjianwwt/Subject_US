@@ -1,0 +1,435 @@
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    .laydate-theme-exist td.layui-this{background-color:white !important;color:#666 !important}
+    .layui-table-cell {
+        height: auto !important
+    }
+    
+    .list-group li:last-child,
+    .list-link a:last-child {
+        border-bottom: solid 1px #ddd !important
+    }
+    
+    div#detail{left:0px;right: 0px;top:0px;bottom: 0px;position: fixed;width: 100%;height: 100%;background: url(images/shade.png) repeat;
+	display: flex;justify-content: center;align-items: center;display: none;}
+	div#detail #box{width: 1000px;border-radius:5px;background: white;margin: 0 auto;float: left;padding: 20px;color: #666;
+	font: 14px/36px "microsoft yahei";box-sizing: border-box;overflow:auto;max-height: 500px;}
+	#box section{float: left;width:50%;margin:30px 0px}
+	/*#box section{border-left: solid 1px gainsboro;border-top: solid 1px gainsboro;}*/
+	#box section:nth-of-type(1){border-right: solid 2px gainsboro;}
+	div#detail .item{height: 36px;border-bottom: solid 1px gainsboro;padding: 0px 5px;}
+	div#detail .con{color: #666;float: right;}
+	.btn{margin-top: 25px;margin-left: 0px;text-align: center;}
+	div.remark{padding: 0px 5px;}
+	div.remark #right{font:14px/24px "microsoft yahei";color: #666;display: inline-block;width: 82%;vertical-align:text-top}
+    
+</style>
+<script type="text/html" id="num_tpl">
+    {{loader.send_data++}}
+</script>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>pos数据管理</strong>
+    </div>
+    <div class="panel-body">
+        <form class="layui-form" id="filter" action="" style="margin-top: 10px;">
+            <div class="layui-form-item">
+                <label class="layui-form-label">案号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="caseNumber" autocomplete="off" placeholder="案号" class="layui-input">
+                </div>
+                <label class="layui-form-label">交易时间</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="startDateStr" class="layui-input" id="start" placeholder="开始时间">
+                </div>
+                <label class="layui-form-label">-</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="endDateStr" class="layui-input" id="end" placeholder="结束时间">
+                </div>
+                <div class="layui-input-inline">
+                    <button type="submit" lay-submit="" class="button bg-mix" lay-filter="query">提交查询</button>
+                    <!-- <a class="button bg-main" href="javascript:loader.load('#admin_container','data_post_preserve.html')">刷新</a> -->
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="panel-head">
+        <a class="button bg-main" href="javascript:loader.load('#admin_container','data_post_add.html')">新增pos数据</a>
+        <div class="layui-input-inline">
+            <input type="text" name="inpDate" class="layui-input" id="imp" placeholder="查看已导入日期">
+        </div>
+        <button class="button bg-main" id="import">导入</button>
+        <input type="file" class="layui-hide" id="upload" />
+    </div>
+</div>
+<table class="layui-hide" id="list" lay-filter="pospay"></table>
+<ul class="list-group">
+    <li class="layui-col-xs12 layui-col-sm12 layui-col-md12">POS机收支各款项的汇总：</li>
+</ul>
+<ul class="list-group">
+    <li class="layui-col-xs3 layui-col-sm3 layui-col-md3">交易金额:<span>0</span></li>
+    <li class="layui-col-xs3 layui-col-sm3 layui-col-md3">红利收入:<span>0</span></li>
+    <li class="layui-col-xs3 layui-col-sm3 layui-col-md3">小费:<span>0</span></li>
+    <li class="layui-col-xs3 layui-col-sm3 layui-col-md3">分期手续费:<span>0</span></li>
+</ul>
+<ul class="list-group">
+    <li class="layui-col-xs3 layui-col-sm3 layui-col-md3">净收金额:<span>0</span></li>
+    <li class="layui-col-xs3 layui-col-sm3 layui-col-md3">红利支出:<span>0</span></li>
+    <li class="layui-col-xs3 layui-col-sm3 layui-col-md3">手续费:<span>0</span></li>
+</ul>
+<div id="detail">
+	<div id="box">
+		<section></section>
+		<section></section>
+		<div class="layui-form-item">
+	        <div class="layui-input-block btn">
+	            <a class="layui-btn" href="javascript:$('#detail').hide()">关闭</a>
+	        </div>
+	    </div>
+	</div>
+</div>
+<script type="text/html" id='handle'>
+    <button class="border-blue button button-little" lay-event="edit">编辑</button>
+    <button class="border-green button button-little" lay-event="detail">详情</button>
+    <!-- <button class="border-red button button-little" lay-event="del">删除</button> -->
+</script>
+<script type="text/javascript">
+    layui.use(['form', 'table', 'laydate'], function() {
+        var form = layui.form,
+            table = layui.table,
+            laydate = layui.laydate;
+        form.render();
+        loader.send_data = 1;
+        // 置空临时参数
+        loader.temp_data = "";
+
+        $('input[name=caseNumber]').val(loader.resp_data.caseNumber || '');
+
+        var config = {
+            elem: '#list',
+            where: {
+                userToken: loader.getCookie('token'),
+                caseNumber: loader.resp_data.caseNumber || '',
+                startDateStr: loader.resp_data.startDateStr || '',
+                endDateStr: loader.resp_data.endDateStr || ''
+            },
+            url: loader.baseurl + '/posPay/list',
+            page:true,
+            limit: 10,
+            cols: [
+                [{
+                        fixed: 'left',
+                        templet: '#num_tpl',
+                        width: 80,
+                        title: '序号'
+                    }, {
+                        field: 'transactionTime',
+                        width: 200,
+                        sort: true,
+                        title: '交易时间'
+                    }, {
+                        field: 'bankNumber',
+                        width: 200,
+                        title: '银行卡号'
+                    }, {
+                        field: 'netProceeds',
+                        width: 100,
+                        title: '净收金额'
+                    }, {
+                        field: 'transactionSearcheNumber',
+                        width: 220,
+                        title: '交易检索号'
+                    }, {
+                        field: 'caseNumber',
+                        width: 200,
+                        title: '案号'
+                    }, {
+                        field: 'chikar',
+                        width: 100,
+                        title: '持卡人'
+                    }, {
+                        field: 'subjectName',
+                        width: 150,
+                        title: '科目名称'
+                    }, {
+                        field: 'departmentName',
+                        width: 150,
+                        title: '部门名称'
+                    },{
+                           field: 'terminalNumber',
+                           width: 200,
+                           title: '终端编号'
+                       }, {
+                           field: 'transationPrice',
+                           width: 100,
+                           title: '交易金额'
+                       }, {
+                           field: 'dividendIncome',
+                           width: 100,
+                           title: '红利收入'
+                       }, {
+                           field: 'dividendExpenditure',
+                           width: 100,
+                           title: '红利支出 '
+                       }, {
+                           field: 'dumbo',
+                           width: 100,
+                           title: '小费'
+                       }, {
+                           field: 'serviceCharge',
+                           width: 100,
+                           title: '手续费'
+                       }, {
+                           field: 'installmentFee',
+                           width: 130,
+                           title: '分期付款手续费 '
+                       }, {
+                           field: 'transactionType',
+                           width: 100,
+                           title: '交易类型'
+                       }, {
+                           field: 'moneyNature',
+                           width: 100,
+                           title: '款项性质'
+                       }, {
+                           field: 'receivablesNumber',
+                           width: 200,
+                           title: '收款账号'
+                       }, {
+                           field: 'undertaker',
+                           width: 100,
+                           title: '承办人名 '
+                       }, {
+                           field: 'abstractInfo',
+                           width: 100,
+                           title: '摘要'
+                       },{
+                        fixed: 'right',
+                        width: 110,
+                        title: '操作',
+                        toolbar: '#handle'
+                    }
+                ]
+            ],
+            response: {
+                statusCode: 1,
+            },
+            done: function(res,curr) {
+                loader.send_data = 1;
+                loader.fail(res);
+                config.curr = curr;
+            }
+        };
+
+        var user_list = table.render(config);
+
+        form.on('submit(query)', function(obj) {
+            config.where = obj.field;
+            user_list.reload(config);
+            count(obj.field.caseNumber, obj.field.startDateStr, obj.field.endDateStr);
+            return false;
+        });
+
+        laydate.render({
+            elem: '#start',
+            value: loader.resp_data.startDateStr || ''
+        });
+        laydate.render({
+            elem: '#end',
+            value: loader.resp_data.endDateStr || ''
+        });
+        
+        laydate.render({
+            elem: '#imp',
+            format: 'yyyy-MM',
+            theme: 'exist',
+            ready: function(date) {
+                var year = date.year;
+                var month = date.month;
+                month = (month < 10 ? '0' + month : month);
+                date = year + '-' + month;
+                imped(date);
+            },
+            change: function(value) {
+                imped(value);
+            }
+        });
+
+        /**
+         * 已导数据日期标记
+         * @author:Mr.Ding
+         * **/
+        var imped = function(date) {
+            var tds = $('div.laydate-theme-exist td');
+            if (!date) {
+                var nowDate = new Date();
+                var year = nowDate.getFullYear();
+                var month = nowDate.getMonth() + 1;
+                month = (month < 10 ? '0' + month : month);
+                date = year + '-' + month;
+            }
+            var data = {
+                dateStr: date,
+                sys_click: 'pos'
+            };
+            fun.get(loader.baseurl + '/data/guideResp', data, function(rs) {
+                if (rs.data.length) {
+                    tds.each(function(index, el) {
+                        for (var i = 0; i < rs.data.length; i++) {
+                            if ($(el).attr('lay-ymd') == convertDate(rs.data[i])) {
+                                $(el).addClass('laydate-day-exist');
+                                continue;
+                            }
+                        }
+                    });
+                }
+            })
+        };
+        
+        /**
+         * 日期格式转换
+         * 2018-03-02 => 2018-3-2
+         * @param dateStr
+         * @author Mr.Ding
+         * **/
+		function convertDate(dateStr){
+			if(!dateStr) return;
+			var time = new Date(dateStr),
+			year = time.getFullYear(),
+			month = time.getMonth()+1,
+			day = time.getDate();
+			return year+'-'+month+'-'+day;
+		}
+
+        table.on('tool(pospay)', function(obj) {
+            if (obj.event === 'edit') { //编辑
+                if (obj.data.isLock) return layer.alert('数据已结算锁定，禁止编辑', {
+                    icon: 2
+                });
+                loader.temp_data = obj.data;
+                loader.resp_data = loader.serialize('#filter');
+                loader.load('#admin_container', 'data_post_edit.html');
+            }
+            if(obj.event === 'detail'){ //详情
+            	var title = '',val='',sections = $('#box section');
+            	var cols = config.cols[0].slice(1,config.cols[0].length-1);
+            	for(var i = 0,n; n=cols[i++];){
+            		title = n.title+'：';
+            		val = obj.data[n.field]||'';
+            		var domStr = '<div class="item"><span class="name">'+title+'</span>'+
+								 '<span class="right con">'+val+'</span></div>';
+            		if(!(i%2)){
+            			sections.eq(1).append($(domStr));
+            		}else{
+            			sections.eq(0).append($(domStr));
+            			if(i==cols.length){  //单排最后一列
+            				var temp = $(domStr);
+            				temp.find('.name').text('');
+            				temp.find('.con').text('');
+            				sections.eq(1).append(temp);
+            			}
+            		}
+            	}
+            	$('div#detail').css('display','flex');
+            }
+        })
+
+        /**
+         * 请求成功的处理函数
+         * @param res 结果集
+         * @param success 成功提示
+         * @param fail 失败提示
+         * **/
+        var done = function(res, success, fail) {
+            layer.closeAll('loading');
+            var msg = res.msg || (res.code == 1 ? success : fail);
+            layer.alert(msg, {
+                icon: res.code
+            }, function(i) {
+                layer.close(i);
+                if (res.code == 1)
+                    loader.load('#admin_container', 'data_post_preserve.html'); //刷新当前页面
+            });
+        };
+
+        //汇总
+        var count = function(caseNumber, startDateStr, endDateStr) {
+            caseNumber = caseNumber || '';
+            startDateStr = startDateStr || '';
+            endDateStr = endDateStr || '';
+            var data = {
+                caseNumber: caseNumber,
+                startDateStr: startDateStr,
+                endDateStr: endDateStr
+            };
+            fun.get(loader.baseurl + '/posPay/getSumDataByListParam', data, function(rs) {
+                if (rs) {
+                    var group = $('ul.list-group li');
+                    group.eq(1).children('span').text(rs.data ? rs.data.transationPriceSum : 0);
+                    group.eq(2).children('span').text(rs.data ? rs.data.dividendIncomeSum : 0);
+                    group.eq(3).children('span').text(rs.data ? rs.data.dumboSum : 0);
+                    group.eq(4).children('span').text(rs.data ? rs.data.installmentFeeSum : 0);
+                    group.eq(5).children('span').text(rs.data ? rs.data.netProceedsSum : 0);
+                    group.eq(6).children('span').text(rs.data ? rs.data.dividendExpenditureSum : 0);
+                    group.eq(7).children('span').text(rs.data ? rs.data.serviceChargeSum : 0);
+                }
+            });
+        }
+
+        count(loader.resp_data.caseNumber || '', loader.resp_data.startDateStr || '', loader.resp_data.endDateStr || '');
+
+        //导入
+        $('#import').click(function() {
+            $(this).next().click();
+        });
+
+        $('#upload').change(function() {
+            layer.load();
+            var that = this;
+            var formData = new FormData();
+            formData.append("file", $(this)[0].files[0]);
+            formData.append("userToken", loader.getCookie('token'));
+            formData.append("sys_click", "pos");
+            var url = loader.baseurl + "/data/import";
+            $.ajax({
+                type: "POST", //提交方式
+                url: url, //路径
+                data: formData,
+                // 告诉jQuery不要去处理发送的数据
+                processData: false,
+                // 告诉jQuery不要去设置Content-Type请求头
+                contentType: false,
+                success: function(data) { //返回数据根据结果进行相应的处理
+                    var code = data.code;
+                    layer.alert(data.msg, {
+                        icon: code,
+                        end: function() {
+                            if (code == 1) loader.load('#admin_container', 'data_post_preserve.html'); //刷新当前页面
+                        }
+                    });
+                },
+                error: function() {
+                    layer.alert("请求异常!", {
+                        icon: 2
+                    });
+                },
+                complete: function() {
+                    layer.closeAll('loading');
+                    $(that).val('');
+                }
+            });
+        })
+
+        loader.resp_data = {};
+
+    });
+</script>

@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.born.bc.basicdata.dao.InterPayDtoMapper" >
+  <resultMap id="BaseResultMap" type="com.born.bc.basicdata.entity.InterPayDto" >
+    <id column="ID" property="id" jdbcType="VARCHAR" />
+    <result column="VOUCHER_NO" property="voucherNo" jdbcType="VARCHAR" />
+    <result column="LOCAL_NUMBER" property="localNumber" jdbcType="VARCHAR" />
+    <result column="PARTY_NUMBER" property="partyNumber" jdbcType="VARCHAR" />
+    <result column="TRANSACTION_TIME" property="transactionTime" jdbcType="TIMESTAMP" />
+    <result column="BORROW_OR_LEND" property="borrowOrLend" jdbcType="VARCHAR" />
+    <result column="DEBIT_PRICE" property="debitPrice" jdbcType="DECIMAL" />
+    <result column="CREDIT_PRICE" property="creditPrice" jdbcType="DECIMAL" />
+    <result column="PARTY_LINE_NUMBER" property="partyLineNumber" jdbcType="VARCHAR" />
+    <result column="ABSTRACT_INFO" property="abstractInfo" jdbcType="VARCHAR" />
+    <result column="PURPOSE" property="purpose" jdbcType="VARCHAR" />
+    <result column="CORPORATE_NAME" property="corporateName" jdbcType="VARCHAR" />
+    <result column="BALANCE" property="balance" jdbcType="DECIMAL" />
+    <result column="INDIVIDUATION" property="individuation" jdbcType="VARCHAR" />
+    <result column="CASE_ID" property="caseId" jdbcType="VARCHAR" />
+    <result column="CASE_NUMBER" property="caseNumber" jdbcType="VARCHAR" />
+    <result column="SUBJECT_ID" property="subjectId" jdbcType="VARCHAR" />
+    <result column="SUBJECT_NAME" property="subjectName" jdbcType="VARCHAR" />
+    <result column="DEPARTMENT_NAME" property="departmentName" jdbcType="VARCHAR" />
+    <result column="UNDERTAKER" property="undertaker" jdbcType="VARCHAR" />
+    <result column="IS_EDIT" property="isEdit" jdbcType="INTEGER" />
+    <result column="BATCH_NUMBER" property="batchNumber" jdbcType="VARCHAR" />
+    <result column="IS_LOCK" property="isLock" jdbcType="INTEGER" />
+    <result column="FORMMAKER_ID" property="formmakerId" jdbcType="VARCHAR" />
+    <result column="FORMMAKER_NAME" property="formmakerName" jdbcType="VARCHAR" />
+    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="LAST_MODIFIED_TIME" property="lastModifiedTime" jdbcType="TIMESTAMP" />
+    <result column="DEL_STATUS" property="delStatus" jdbcType="INTEGER" />
+    <result column="PARENT_ID" property="parentId" jdbcType="VARCHAR" />
+    <result column="IS_SPLIT" property="isSplit" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ID, VOUCHER_NO, LOCAL_NUMBER, PARTY_NUMBER, TRANSACTION_TIME, BORROW_OR_LEND, DEBIT_PRICE, 
+    CREDIT_PRICE, PARTY_LINE_NUMBER, ABSTRACT_INFO, PURPOSE, CORPORATE_NAME, BALANCE, 
+    INDIVIDUATION, CASE_ID, CASE_NUMBER, SUBJECT_ID, SUBJECT_NAME, DEPARTMENT_NAME, UNDERTAKER, 
+    IS_EDIT, BATCH_NUMBER, IS_LOCK, FORMMAKER_ID, FORMMAKER_NAME, CREATE_TIME, 
+    DEL_STATUS,PARENT_ID,IS_SPLIT
+  </sql>
+  
+  <update id="cleanCaseInfoByCaseId" parameterType="java.lang.String">
+  	update t_dt_inter_pay set CASE_ID = '', CASE_NUMBER = '' where CASE_ID = #{caseId,jdbcType=VARCHAR}
+  </update>
+  
+  <update id="changeIsSplitById" parameterType="java.lang.String">
+  	update t_dt_inter_pay set IS_SPLIT = 1, LAST_MODIFIED_TIME = now() where ID = #{id, jdbcType=VARCHAR}
+  </update>
+  
+  <select id="selectByList" parameterType="com.born.bc.basicdata.entity.InterPayParamDto" resultMap="BaseResultMap">
+  		select 
+		<include refid="Base_Column_List" />
+		from t_dt_inter_pay 
+		<where>
+			DEL_STATUS = 0
+			and IS_SPLIT = 0
+			<if test="dto.caseNumber != null and dto.caseNumber != ''">
+				and instr(CASE_NUMBER, #{dto.caseNumber, jdbcType=VARCHAR}) &gt; 0
+			</if>
+			<if test="dto.startDate != null">
+				and TRANSACTION_TIME &gt;= #{dto.startDate, jdbcType=TIMESTAMP}
+			</if>
+			<if test="dto.endDate != null">
+				and TRANSACTION_TIME &lt; #{dto.endDate, jdbcType=TIMESTAMP}
+			</if>
+		</where>
+		order by IS_EDIT ASC, TRANSACTION_TIME ASC
+  </select>
+  
+  <select id="getSumDataByListParam" parameterType="com.born.bc.basicdata.entity.InterPayParamDto" resultType="com.born.bc.basicdata.entity.ZoomInterResultDto">
+  		select 
+			SUM(IFNULL(DEBIT_PRICE,0)) debitPriceSum,
+			SUM(IFNULL(CREDIT_PRICE,0)) creditPriceSum,
+      		SUM(IFNULL(BALANCE,0)) balanceSum
+		from t_dt_inter_pay 
+		<where>
+			DEL_STATUS = 0
+			and IS_SPLIT = 0
+			<if test="dto.caseNumber != null and dto.caseNumber != ''">
+				and instr(CASE_NUMBER, #{dto.caseNumber, jdbcType=VARCHAR}) &gt; 0
+			</if>
+			<if test="dto.startDate != null">
+				and TRANSACTION_TIME &gt;= #{dto.startDate, jdbcType=TIMESTAMP}
+			</if>
+			<if test="dto.endDate != null">
+				and TRANSACTION_TIME &lt; #{dto.endDate, jdbcType=TIMESTAMP}
+			</if>
+		</where>
+  </select>
+  
+  <select id="guideResp" parameterType="java.lang.String" resultType="java.lang.String">
+  	SELECT 
+		DATE_FORMAT(
+			TRANSACTION_TIME,
+			'%Y-%m-%d'
+		) "insertDate"
+	FROM
+		t_dt_inter_pay
+	WHERE
+		DEL_STATUS = 0
+		AND DATE_FORMAT(TRANSACTION_TIME, '%Y-%m') = #{dateStr, jdbcType=VARCHAR}
+  </select>
+  
+  <select id="isEditData" parameterType="java.lang.String" resultType="java.lang.String">
+  	SELECT
+			dateStr,
+			count(1) num,
+			"1" flag
+		FROM
+			(
+				SELECT
+					DATE_FORMAT(
+						TRANSACTION_TIME,
+						'%Y-%m-%d'
+					) dateStr
+				FROM
+					t_dt_inter_pay
+				WHERE
+					DEL_STATUS = 0
+				AND IS_EDIT = 1
+				AND DATE_FORMAT(TRANSACTION_TIME, '%Y-%m') = #{dateStr, jdbcType=VARCHAR}
+			) tb
+		GROUP BY
+			dateStr
+		UNION ALL
+			SELECT
+				dateStr,
+				count(1) num,
+				"0" flag
+			FROM
+				(
+					SELECT
+						DATE_FORMAT(
+							TRANSACTION_TIME,
+							'%Y-%m-%d'
+						) dateStr
+					FROM
+						t_dt_inter_pay
+					WHERE
+						DEL_STATUS = 0
+					AND IS_EDIT = 0
+					AND DATE_FORMAT(TRANSACTION_TIME, '%Y-%m') = #{dateStr, jdbcType=VARCHAR}
+				) tb
+			GROUP BY
+				dateStr
+  </select>
+  
+  
+  <select id="selectDateExcutoed" parameterType="java.util.Set" resultType="java.lang.String">
+  		SELECT
+			DATE_FORMAT(TRANSACTION_TIME,'%Y-%m-%d')
+		FROM
+			t_dt_inter_pay
+		WHERE
+			DATE_FORMAT(TRANSACTION_TIME,'%Y-%m-%d') IN (
+				<foreach collection="sets" item="item" index="index" separator=",">
+					#{item,jdbcType=VARCHAR}
+				</foreach>
+			)
+  </select>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_dt_inter_pay
+    where ID = #{id,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from t_dt_inter_pay
+    where ID = #{id,jdbcType=VARCHAR}
+  </delete>
+  
+  <insert id="batchInsert" parameterType="java.util.List" >
+    insert into t_dt_inter_pay (
+      ID, 
+      VOUCHER_NO, 
+      LOCAL_NUMBER, 
+      PARTY_NUMBER, 
+      TRANSACTION_TIME, 
+      BORROW_OR_LEND, 
+      DEBIT_PRICE, 
+      CREDIT_PRICE, 
+      PARTY_LINE_NUMBER, 
+      ABSTRACT_INFO, 
+      PURPOSE, 
+      CORPORATE_NAME, 
+      BALANCE, 
+      INDIVIDUATION, 
+      CASE_ID, 
+      CASE_NUMBER, 
+      SUBJECT_ID, 
+      SUBJECT_NAME, 
+      DEPARTMENT_NAME, 
+      UNDERTAKER, 
+      IS_EDIT, 
+      BATCH_NUMBER, 
+      IS_LOCK,
+      FORMMAKER_ID, 
+      FORMMAKER_NAME, 
+      CREATE_TIME, 
+      DEL_STATUS,
+      IS_SPLIT
+      )
+    values 
+    <foreach collection="list" item="item" index="index" separator=",">
+     (
+      #{item.id,jdbcType=VARCHAR}, 
+      #{item.voucherNo,jdbcType=VARCHAR}, 
+      #{item.localNumber,jdbcType=VARCHAR}, 
+      #{item.partyNumber,jdbcType=VARCHAR}, 
+      #{item.transactionTime,jdbcType=TIMESTAMP}, 
+      #{item.borrowOrLend,jdbcType=VARCHAR}, 
+      #{item.debitPrice,jdbcType=DECIMAL}, 
+      #{item.creditPrice,jdbcType=DECIMAL}, 
+      #{item.partyLineNumber,jdbcType=VARCHAR}, 
+      #{item.abstractInfo,jdbcType=VARCHAR}, 
+      #{item.purpose,jdbcType=VARCHAR}, 
+      #{item.corporateName,jdbcType=VARCHAR}, 
+      #{item.balance,jdbcType=DECIMAL}, 
+      #{item.individuation,jdbcType=VARCHAR}, 
+      #{item.caseId,jdbcType=VARCHAR}, 
+      #{item.caseNumber,jdbcType=VARCHAR}, 
+      #{item.subjectId,jdbcType=VARCHAR}, 
+      #{item.subjectName,jdbcType=VARCHAR}, 
+      #{item.departmentName,jdbcType=VARCHAR}, 
+      #{item.undertaker,jdbcType=VARCHAR}, 
+      0, 
+      #{item.batchNumber,jdbcType=VARCHAR}, 
+      0,
+      #{item.formmakerId,jdbcType=VARCHAR},
+      #{item.formmakerName,jdbcType=VARCHAR}, 
+      now(),
+      0,
+      0
+      )
+    </foreach>
+  </insert>
+  
+  
+  <insert id="insert" parameterType="com.born.bc.basicdata.entity.InterPayDto" >
+    insert into t_dt_inter_pay (ID, VOUCHER_NO, LOCAL_NUMBER, 
+      PARTY_NUMBER, TRANSACTION_TIME, BORROW_OR_LEND, 
+      DEBIT_PRICE, CREDIT_PRICE, PARTY_LINE_NUMBER, 
+      ABSTRACT_INFO, PURPOSE, CORPORATE_NAME, 
+      BALANCE, INDIVIDUATION, CASE_ID, 
+      CASE_NUMBER, SUBJECT_ID, SUBJECT_NAME, 
+      DEPARTMENT_NAME, UNDERTAKER, IS_EDIT, 
+      BATCH_NUMBER, FORMMAKER_ID, FORMMAKER_NAME, 
+      CREATE_TIME, LAST_MODIFIED_TIME, DEL_STATUS
+      )
+    values (#{id,jdbcType=VARCHAR}, #{voucherNo,jdbcType=VARCHAR}, #{localNumber,jdbcType=VARCHAR}, 
+      #{partyNumber,jdbcType=VARCHAR}, #{transactionTime,jdbcType=TIMESTAMP}, #{borrowOrLend,jdbcType=VARCHAR}, 
+      #{debitPrice,jdbcType=DECIMAL}, #{creditPrice,jdbcType=DECIMAL}, #{partyLineNumber,jdbcType=VARCHAR}, 
+      #{abstractInfo,jdbcType=VARCHAR}, #{purpose,jdbcType=VARCHAR}, #{corporateName,jdbcType=VARCHAR}, 
+      #{balance,jdbcType=DECIMAL}, #{individuation,jdbcType=VARCHAR}, #{caseId,jdbcType=VARCHAR}, 
+      #{caseNumber,jdbcType=VARCHAR}, #{subjectId,jdbcType=VARCHAR}, #{subjectName,jdbcType=VARCHAR}, 
+      #{departmentName,jdbcType=VARCHAR}, #{undertaker,jdbcType=VARCHAR}, #{isEdit,jdbcType=INTEGER}, 
+      #{batchNumber,jdbcType=VARCHAR}, #{formmakerId,jdbcType=VARCHAR}, #{formmakerName,jdbcType=VARCHAR}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{lastModifiedTime,jdbcType=TIMESTAMP}, #{delStatus,jdbcType=INTEGER}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.born.bc.basicdata.entity.InterPayDto" >
+    insert into t_dt_inter_pay
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+        ID,
+      <if test="voucherNo != null" >
+        VOUCHER_NO,
+      </if>
+      <if test="localNumber != null" >
+        LOCAL_NUMBER,
+      </if>
+      <if test="partyNumber != null" >
+        PARTY_NUMBER,
+      </if>
+      <if test="transactionTime != null" >
+        TRANSACTION_TIME,
+      </if>
+      <if test="borrowOrLend != null" >
+        BORROW_OR_LEND,
+      </if>
+      <if test="debitPrice != null" >
+        DEBIT_PRICE,
+      </if>
+      <if test="creditPrice != null" >
+        CREDIT_PRICE,
+      </if>
+      <if test="partyLineNumber != null" >
+        PARTY_LINE_NUMBER,
+      </if>
+      <if test="abstractInfo != null" >
+        ABSTRACT_INFO,
+      </if>
+      <if test="purpose != null" >
+        PURPOSE,
+      </if>
+      <if test="corporateName != null" >
+        CORPORATE_NAME,
+      </if>
+      <if test="balance != null" >
+        BALANCE,
+      </if>
+      <if test="individuation != null" >
+        INDIVIDUATION,
+      </if>
+      <if test="caseId != null" >
+        CASE_ID,
+      </if>
+      <if test="caseNumber != null" >
+        CASE_NUMBER,
+      </if>
+      <if test="subjectId != null" >
+        SUBJECT_ID,
+      </if>
+      <if test="subjectName != null" >
+        SUBJECT_NAME,
+      </if>
+      <if test="departmentName != null" >
+        DEPARTMENT_NAME,
+      </if>
+      <if test="undertaker != null" >
+        UNDERTAKER,
+      </if>
+      <if test="isEdit != null" >
+        IS_EDIT,
+      </if>
+      <if test="batchNumber != null" >
+        BATCH_NUMBER,
+      </if>
+      <if test="formmakerId != null" >
+        FORMMAKER_ID,
+      </if>
+      <if test="formmakerName != null" >
+        FORMMAKER_NAME,
+      </if>
+        CREATE_TIME,
+        DEL_STATUS,
+		IS_SPLIT        
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+        #{id,jdbcType=VARCHAR},
+      <if test="voucherNo != null" >
+        #{voucherNo,jdbcType=VARCHAR},
+      </if>
+      <if test="localNumber != null" >
+        #{localNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="partyNumber != null" >
+        #{partyNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="transactionTime != null" >
+        #{transactionTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="borrowOrLend != null" >
+        #{borrowOrLend,jdbcType=VARCHAR},
+      </if>
+      <if test="debitPrice != null" >
+        #{debitPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="creditPrice != null" >
+        #{creditPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="partyLineNumber != null" >
+        #{partyLineNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="abstractInfo != null" >
+        #{abstractInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="purpose != null" >
+        #{purpose,jdbcType=VARCHAR},
+      </if>
+      <if test="corporateName != null" >
+        #{corporateName,jdbcType=VARCHAR},
+      </if>
+      <if test="balance != null" >
+        #{balance,jdbcType=DECIMAL},
+      </if>
+      <if test="individuation != null" >
+        #{individuation,jdbcType=VARCHAR},
+      </if>
+      <if test="caseId != null" >
+        #{caseId,jdbcType=VARCHAR},
+      </if>
+      <if test="caseNumber != null" >
+        #{caseNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="subjectId != null" >
+        #{subjectId,jdbcType=VARCHAR},
+      </if>
+      <if test="subjectName != null" >
+        #{subjectName,jdbcType=VARCHAR},
+      </if>
+      <if test="departmentName != null" >
+        #{departmentName,jdbcType=VARCHAR},
+      </if>
+      <if test="undertaker != null" >
+        #{undertaker,jdbcType=VARCHAR},
+      </if>
+      <if test="isEdit != null" >
+        #{isEdit,jdbcType=INTEGER},
+      </if>
+      <if test="batchNumber != null" >
+        #{batchNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="formmakerId != null" >
+        #{formmakerId,jdbcType=VARCHAR},
+      </if>
+      <if test="formmakerName != null" >
+        #{formmakerName,jdbcType=VARCHAR},
+      </if>
+      now(),
+      0,
+      0
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.born.bc.basicdata.entity.InterPayDto" >
+    update t_dt_inter_pay
+    <set >
+      <if test="voucherNo != null" >
+        VOUCHER_NO = #{voucherNo,jdbcType=VARCHAR},
+      </if>
+      <if test="localNumber != null" >
+        LOCAL_NUMBER = #{localNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="partyNumber != null" >
+        PARTY_NUMBER = #{partyNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="transactionTime != null" >
+        TRANSACTION_TIME = #{transactionTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="borrowOrLend != null" >
+        BORROW_OR_LEND = #{borrowOrLend,jdbcType=VARCHAR},
+      </if>
+      <if test="debitPrice != null" >
+        DEBIT_PRICE = #{debitPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="creditPrice != null" >
+        CREDIT_PRICE = #{creditPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="partyLineNumber != null" >
+        PARTY_LINE_NUMBER = #{partyLineNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="abstractInfo != null" >
+        ABSTRACT_INFO = #{abstractInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="purpose != null" >
+        PURPOSE = #{purpose,jdbcType=VARCHAR},
+      </if>
+      <if test="corporateName != null" >
+        CORPORATE_NAME = #{corporateName,jdbcType=VARCHAR},
+      </if>
+      <if test="balance != null" >
+        BALANCE = #{balance,jdbcType=DECIMAL},
+      </if>
+      <if test="individuation != null" >
+        INDIVIDUATION = #{individuation,jdbcType=VARCHAR},
+      </if>
+      <if test="caseId != null" >
+        CASE_ID = #{caseId,jdbcType=VARCHAR},
+      </if>
+      <if test="caseNumber != null" >
+        CASE_NUMBER = #{caseNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="subjectId != null" >
+        SUBJECT_ID = #{subjectId,jdbcType=VARCHAR},
+      </if>
+      <if test="subjectName != null" >
+        SUBJECT_NAME = #{subjectName,jdbcType=VARCHAR},
+      </if>
+      <if test="departmentName != null" >
+        DEPARTMENT_NAME = #{departmentName,jdbcType=VARCHAR},
+      </if>
+      <if test="undertaker != null" >
+        UNDERTAKER = #{undertaker,jdbcType=VARCHAR},
+      </if>
+      <if test="isEdit != null" >
+        IS_EDIT = #{isEdit,jdbcType=INTEGER},
+      </if>
+      <if test="batchNumber != null" >
+        BATCH_NUMBER = #{batchNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="formmakerId != null" >
+        FORMMAKER_ID = #{formmakerId,jdbcType=VARCHAR},
+      </if>
+      <if test="formmakerName != null" >
+        FORMMAKER_NAME = #{formmakerName,jdbcType=VARCHAR},
+      </if>
+        LAST_MODIFIED_TIME = now()
+    </set>
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.born.bc.basicdata.entity.InterPayDto" >
+    update t_dt_inter_pay
+    set VOUCHER_NO = #{voucherNo,jdbcType=VARCHAR},
+      LOCAL_NUMBER = #{localNumber,jdbcType=VARCHAR},
+      PARTY_NUMBER = #{partyNumber,jdbcType=VARCHAR},
+      TRANSACTION_TIME = #{transactionTime,jdbcType=TIMESTAMP},
+      BORROW_OR_LEND = #{borrowOrLend,jdbcType=VARCHAR},
+      DEBIT_PRICE = #{debitPrice,jdbcType=DECIMAL},
+      CREDIT_PRICE = #{creditPrice,jdbcType=DECIMAL},
+      PARTY_LINE_NUMBER = #{partyLineNumber,jdbcType=VARCHAR},
+      ABSTRACT_INFO = #{abstractInfo,jdbcType=VARCHAR},
+      PURPOSE = #{purpose,jdbcType=VARCHAR},
+      CORPORATE_NAME = #{corporateName,jdbcType=VARCHAR},
+      BALANCE = #{balance,jdbcType=DECIMAL},
+      INDIVIDUATION = #{individuation,jdbcType=VARCHAR},
+      CASE_ID = #{caseId,jdbcType=VARCHAR},
+      CASE_NUMBER = #{caseNumber,jdbcType=VARCHAR},
+      SUBJECT_ID = #{subjectId,jdbcType=VARCHAR},
+      SUBJECT_NAME = #{subjectName,jdbcType=VARCHAR},
+      DEPARTMENT_NAME = #{departmentName,jdbcType=VARCHAR},
+      UNDERTAKER = #{undertaker,jdbcType=VARCHAR},
+      IS_EDIT = #{isEdit,jdbcType=INTEGER},
+      BATCH_NUMBER = #{batchNumber,jdbcType=VARCHAR},
+      FORMMAKER_ID = #{formmakerId,jdbcType=VARCHAR},
+      FORMMAKER_NAME = #{formmakerName,jdbcType=VARCHAR},
+      LAST_MODIFIED_TIME = now()
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+  
+  <select id="supplement" parameterType="java.lang.String" resultType="java.lang.String">
+  	select 
+  		DATE_FORMAT(
+			TRANSACTION_TIME,
+			'%Y-%m-%d'
+		) 
+	from t_dt_inter_pay
+	where IFNULL(DEL_STATUS,0) = 0
+	AND (CASE_ID IS NOT NULL OR CASE_ID &lt;&gt; '')
+	AND (CASE_NUMBER IS NOT NULL OR CASE_NUMBER &lt;&gt; '' )
+	AND (SUBJECT_NAME IS NOT NULL OR SUBJECT_NAME &lt;&gt; '' )
+	AND (SUBJECT_ID IS NOT NULL OR SUBJECT_ID &lt;&gt; '' )
+	AND (CORPORATE_NAME IS NOT NULL OR CORPORATE_NAME &lt;&gt; '' )
+	AND DATE_FORMAT(TRANSACTION_TIME, '%Y-%m') = #{dateStr,jdbcType=VARCHAR}
+  </select>
+  
+  <select id="supplementLength" parameterType="java.lang.String" resultType="java.lang.Integer">
+  	select 
+  		count(1)
+	from t_dt_inter_pay
+	where IFNULL(DEL_STATUS,0) = 0
+	AND DATE_FORMAT(TRANSACTION_TIME, '%Y-%m-%d') = #{dateStr,jdbcType=VARCHAR}
+  </select>
+</mapper>

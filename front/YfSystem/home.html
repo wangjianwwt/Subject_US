@@ -1,0 +1,497 @@
+<link rel="stylesheet" href="https://at.alicdn.com/t/font_234130_nem7eskcrkpdgqfr.css">
+<!--字体文件-->
+<style type="text/css">
+    div#admin_container {
+        background: #f2f2f2;
+    }
+    
+    div.info {
+        margin-top: 20px;
+    }
+    
+    .info div {
+        display: inline-block;
+    }
+    
+    .info #left {
+        background: url(images/left.jpg) no-repeat;
+        background-size: cover;
+        width: 540px;
+        height: 96px;
+        margin-left: 20px;
+    }
+    
+    .info #right {
+        background: url(images/right.jpg) no-repeat;
+        background-size: cover;
+        width: 540px;
+        height: 96px;
+        margin-left: 20px;
+    }
+    
+    .info p {
+        margin-left: 40px;
+    }
+    
+    .info #left:before {
+        content: '';
+        height: 96px;
+        width: 16px;
+        background: #3d75c2;
+        display: inline-block;
+        float: left;
+    }
+    
+    .info #right:before {
+        content: '';
+        height: 96px;
+        width: 16px;
+        background: #0d886a;
+        display: inline-block;
+        float: left;
+    }
+    
+    .info p {
+        font: 18px/28px "microsoft yahei";
+        margin-bottom: 0px !important;
+    }
+    
+    .info p#count {
+        font-size: 16px;
+        margin-top: 20px;
+        color: white;
+    }
+    
+    .info #welcome {
+        color: #2268a0
+    }
+    
+    .info p#ip {
+        margin-top: 20px;
+    }
+    
+    .info #right p {
+        color: #0d886a;
+    }
+    
+    div#date {
+        padding-left: 20px;
+        padding-top: 20px;
+    }
+    
+    div#flag {
+        width: 100%;
+        overflow: hidden;
+        text-align: center;
+        margin-top: 10px;
+    }
+    
+    div#flag div {
+        float: left;
+        width: 30%;
+    }
+    
+    div#flag div p.title {
+        font: bold 14px/24px "microsoft yahei";
+    }
+    
+    div#flag div p {
+        margin-bottom: 0px !important;
+    }
+    
+    div#flag div span.none {
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        border-radius: 50%;
+        background: green;
+    }
+    
+    div#flag div span.exit {
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        border-radius: 50%;
+        background: red;
+    }
+    
+    div#flag div label {
+        padding-left: 10px;
+    }
+    
+    div#date,
+    div#main {
+        display: inline-block;
+    }
+    
+    div#date {
+        width: 35%;
+        margin-left: 2%;
+        margin-top: 72px;
+        vertical-align: top;
+    }
+    
+    div#date #box {
+        width: 100%;
+    }
+    
+    div#date p {
+        text-align: center;
+        font-size: 18px;
+        line-height: 30px;
+    }
+    
+    div#main {
+        height: 100%;
+        width: 50%;
+        /* border: 2px solid black; */
+        margin: 5px 0 0 20px;
+    }
+    
+    div#leg {
+        width: 640px;
+        height: 20px;
+        text-align: center;
+        margin-top: -20px;
+    }
+    
+    div#leg span {
+        line-height: 13px;
+        padding: 0px 5px;
+    }
+    
+    div#leg label {
+        display: inline-block;
+        width: 25px;
+        height: 13px;
+        border-radius: 3px;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+        margin-right: 6px;
+    }
+    /**日历部分**/
+    
+    .schedule-box {
+        width: 320px;
+        margin: 0 auto;
+        padding: 35px 20px;
+        font-size: 13px;
+        box-shadow: 2px 2px 15px 2px #e3e3e3;
+        display: inline-block;
+        margin-right: 50px;
+        vertical-align: top;
+    }
+    /*.currentDate{background: green;color: white;}*/
+    
+    .schedule-hd {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 15px;
+    }
+    
+    .today {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .ul-box {
+        overflow: hidden;
+    }
+    
+    .ul-box>li {
+        float: left;
+        width: 14.28%;
+        text-align: center;
+        padding: 5px 0;
+    }
+    
+    .other-month {
+        color: #999999;
+    }
+    
+    .current-month {
+        color: #333333;
+    }
+    
+    .today-style {
+        border-radius: 50%;
+        background: #58d321;
+    }
+    
+    .arrows {
+        cursor: pointer;
+    }
+    
+    .dayStyle {
+        display: inline-block;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 35px;
+        cursor: pointer;
+    }
+    /*.current-month > .dayStyle:hover{background: #00BDFF;color: #ffffff;}*/
+    /*.today-flag{background: #00C2B1;color: #fff;}*/
+    /*.selected-style {background: #00BDFF;color: #ffffff;}*/
+</style>
+<!-- <div class="info">
+    <div id="left">
+        <p id="count">第0次登录</p>
+        <p id="welcome">欢迎使用银法对接系统</p>
+    </div>
+    <div id="right">
+        <p id="ip">上次登录IP:</p>
+        <p id="time">上次登录时间:</p>
+    </div>
+</div> -->
+<div id="date">
+    <p>切换日期可查看其他月份数据情况：</p>
+    <div class='schedule-box' id='box'></div>
+</div>
+<div id="main"></div>
+
+<script src="js/echarts.min.js" type="text/javascript"></script>
+<script src="js/schedule.js" type="text/javascript"></script>
+<script type="text/javascript">
+    function format(date, str) {
+        var mat = {};
+        mat.M = date.getMonth() + 1; //月份记得加1
+        mat.H = date.getHours();
+        mat.s = date.getSeconds();
+        mat.m = date.getMinutes();
+        mat.Y = date.getFullYear();
+        mat.D = date.getDate();
+        mat.d = date.getDay(); //星期几
+        mat.d = check(mat.d);
+        mat.H = check(mat.H);
+        mat.M = check(mat.M);
+        mat.D = check(mat.D);
+        mat.s = check(mat.s);
+        mat.m = check(mat.m);
+        console.log(typeof mat.D)
+        if (str.indexOf(":") > -1) {　　　　　
+            mat.Y = mat.Y.toString().substr(2, 2);　　　　
+            return mat.Y + "/" + mat.M + "/" + mat.D + " " + mat.H + ":" + mat.m + ":" + mat.s;
+        }
+        if (str.indexOf("/") > -1) {
+            return mat.Y + "/" + mat.M + "/" + mat.D + " " + mat.H + "/" + mat.m + "/" + mat.s;
+        }
+        if (str.indexOf("-") > -1) {
+            return mat.Y + "-" + mat.M + "-" + mat.D + " " + mat.H + ":" + mat.m + ":" + mat.s;
+        }
+    }
+    //检查是不是两位数字，不足补全
+    function check(str) {
+        str = str.toString();
+        if (str.length < 2) {
+            str = '0' + str;
+        }
+        return str;
+    }
+
+
+    $('p#count').text("第" + loader.getCookie('num') + "次登录"); //登录次数
+    $('p#ip').text("上次登录IP：" + loader.getCookie('ip')); //登录次数
+
+    var datetime = format(new Date(parseInt(loader.getCookie('time'))), 'yyyy-mm-dd HH-mm-ss');
+    // var year = datetime.getFullYear();
+    // var month = datetime.getMonth() + 1;
+    // month = (month < 10 ? '0' + month : month);
+    // var day = datetime.getDate();
+    // day = (day < 10 ? '0' + day : day);
+
+    // $('p#time').text("上次登录时间：" + year + '/' + month + '/' + day); //登录次数
+    $('p#time').text("上次登录时间：" + datetime); //登录次数
+
+    var dom = document.getElementById("main");
+    var myChart = echarts.init(dom);
+    var app = {};
+    option = null;
+    var cellSize = [80, 80];
+    var pieRadius = 30;
+
+    function getPieSeries(scatterData, chart) {
+        return echarts.util.map(scatterData, function(item, index) {
+            var center = chart.convertToPixel('calendar', item);
+            // console.log(item[5]);
+            return {
+                id: index + 'pie',
+                type: 'pie',
+                center: center,
+                label: {
+                    normal: {
+                        formatter: '{a}',
+                        position: 'inside'
+                    }
+                },
+                radius: pieRadius,
+                data: [{
+                    name: 'pos导入',
+                    value: 20,
+                    itemStyle: {
+                        color: item[1] ? '#c7007d' : 'gray'
+                    }
+                }, {
+                    name: '网银导入',
+                    value: 20,
+                    itemStyle: {
+                        color: item[2] ? '#f80012' : 'gray'
+                    }
+                }, {
+                    name: '结算',
+                    value: 20,
+                    itemStyle: {
+                        color: item[3] ? '#6a0aab' : 'gray'
+                    }
+                }, {
+                    name: 'pos补录',
+                    value: 20,
+                    itemStyle: {
+                        color: item[4] ? '#a8f000' : 'gray'
+                    }
+                }, {
+                    name: '网银补录',
+                    value: 20,
+                    itemStyle: {
+                        color: item[5] ? '#0a64a4' : 'gray'
+                    }
+                }]
+            };
+        });
+    }
+
+    function getVirtulData() {
+        var date = +echarts.number.parseDate('2017-02-01');
+        var end = +echarts.number.parseDate('2017-03-01');
+        var dayTime = 3600 * 24 * 1000;
+        var data = [];
+        for (var time = date; time < end; time += dayTime) {
+            data.push([
+                echarts.format.formatTime('yyyy-MM-dd', time),
+                Math.floor(Math.random() * 10000)
+            ]);
+        }
+        return data;
+    }
+
+    var scatterData = getVirtulData();
+
+    var option = {
+        tooltip: {
+            show: false
+        },
+        textStyle: {
+            color: 'rgba(0,0,0,0)'
+        },
+        color: ['#c7007d', '#f80012', '#6a0aab', '#a8f000', '#0a64a4'],
+        legend: {
+            data: ['pos导入', '网银导入', '结算', 'pos补录', '网银补录'],
+            bottom: 20,
+            show: false
+        },
+        calendar: {
+            top: 'middle',
+            left: 'center',
+            orient: 'vertical',
+            cellSize: cellSize,
+            yearLabel: {
+                show: false,
+                textStyle: {
+                    fontSize: 30
+                }
+            },
+            dayLabel: {
+                margin: 20,
+                firstDay: 7,
+                nameMap: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+            },
+            monthLabel: {
+                show: false
+            },
+            silent: true,
+            range: ['2018-03']
+        },
+        series: [{
+            id: 'label',
+            type: 'scatter',
+            coordinateSystem: 'calendar',
+            symbolSize: 1,
+            label: {
+                normal: {
+                    show: true,
+                    formatter: function(params) {
+                        return echarts.format.formatTime('dd', params.value[0]);
+                    },
+                    offset: [-cellSize[0] / 2 + 10, -cellSize[1] / 2 + 10],
+                    textStyle: {
+                        color: '#000',
+                        fontSize: 14
+                    }
+                }
+            },
+            data: scatterData
+        }]
+    };
+
+    var showData = (function showData(date) {
+        if (typeof(date) == 'function') date = date();
+        fun.get(loader.baseurl + '/data/homeData', {
+            dateStr: date
+        }, function(res) {
+            if (res.code == 1) {
+                option.calendar.range = new Array(date.toString());
+                option.series[0].data = res.data;
+                myChart.setOption(option, true);
+                myChart.setOption({
+                    series: getPieSeries(res.data, myChart)
+                });
+            }
+        });
+        return showData;
+    })(function() {
+
+        var box = $('<div id="leg"></div>');
+        var main = $('#main');
+        var label = $("<span><label style='background:#c7007d'></label>pos导入</span>" +
+            "<span><label style='background:#f80012'></label>网银导入</span>" +
+            "<span><label style='background:#6a0aab'></label>已结算</span>" +
+            "<span><label style='background:#a8f000'></label>pos补录</span>" +
+            "<span><label style='background:#0a64a4'></label>网银补录</span>");
+        box.append(label);
+        box.offset(main.children().offset());
+        main.append(box);
+
+        var nowDate = new Date();
+        var year = nowDate.getFullYear();
+        var month = nowDate.getMonth() + 1;
+        month = (month < 10 ? '0' + month : month);
+        return year + '-' + month;
+    })
+
+    /**日历**/
+    var mySchedule = new Schedule({
+        el: "#box",
+        nextMonthCb: function(y, m, d) {
+            m = (m < 10 ? '0' + m : m);
+            var ym = y + "-" + m;
+            showData(ym);
+        },
+        prevMonthCb: function(y, m, d) {
+            m = (m < 10 ? '0' + m : m);
+            var ym = y + "-" + m;
+            showData(ym);
+        },
+        nextYearCb: function(y, m, d) {
+            m = (m < 10 ? '0' + m : m);
+            var ym = y + "-" + m;
+            showData(ym);
+        },
+        prevYearCb: function(y, m, d) {
+            m = (m < 10 ? '0' + m : m);
+            var ym = y + "-" + m;
+            showData(ym);
+        }
+    });
+    /**日历--end**/
+</script>

@@ -1,0 +1,315 @@
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    .layui-table-cell {
+        height: auto !important
+    }
+    
+    .layui-input-inline {
+        width: 115px !important;
+    }
+    div#detail{left:0px;right: 0px;top:0px;bottom: 0px;position: fixed;width: 100%;height: 100%;background: url(images/shade.png) repeat;
+	display: flex;justify-content: center;align-items: center;display: none;}
+	div#detail #box{width: 1000px;border-radius:5px;background: white;margin: 0 auto;float: left;padding: 20px;color: #666;
+	font: 14px/36px "microsoft yahei";box-sizing: border-box;overflow:auto;max-height: 500px;}
+	#box section{float: left;width:50%;margin:30px 0px}
+	/*#box section{border-left: solid 1px gainsboro;border-top: solid 1px gainsboro;}*/
+	#box section:nth-of-type(1){border-right: solid 2px gainsboro;}
+	div#detail .item{height: 36px;border-bottom: solid 1px gainsboro;padding: 0px 5px;}
+	div#detail .con{color: #666;float: right;}
+	.btn{margin-top: 25px;margin-left: 0px;text-align: center;}
+	div.remark{padding: 0px 5px;}
+	div.remark #right{font:14px/24px "microsoft yahei";color: #666;display: inline-block;width: 82%;vertical-align:text-top}
+</style>
+<script type="text/html" id="num_tpl">
+    {{loader.send_data++}}
+</script>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>支付录入列表</strong>
+    </div>
+    <div class="panel-body">
+        <form class="layui-form" id="filter" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">案号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="caseNumber" autocomplete="off" placeholder="案号" class="layui-input">
+                </div>
+                <label class="layui-form-label">收款账户名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="receivablesAccountName" placeholder="收款账户名称" class="layui-input">
+                </div>
+                <label class="layui-form-label">金额</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="amount" placeholder="金额" class="layui-input">
+                </div>
+                <label class="layui-form-label">日期</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="startDateStr" class="layui-input" id="start" placeholder="开始日期">
+                </div>
+                <label class="layui-form-label">-</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="endDateStr" class="layui-input" id="end" placeholder="结束日期">
+                </div>
+                <div class="layui-input-inline">
+                    <button type="submit" lay-submit="" class="button bg-mix" lay-filter="query">提交查询</button>
+                    <!-- <a class="button bg-main" href="javascript:loader.load('#admin_container','data_income_spending.html')">刷新</a> -->
+                </div>
+            </div>
+            <div class="layui-form-item">
+            </div>
+        </form>
+    </div>
+    <div class="panel-head">
+        <a class="button bg-main" href="javascript:loader.load('#admin_container','data_income_add.html')">新增支付单</a>
+        <button type="submit" lay-submit="" class="button bg-main" lay-filter="export">导出</button>
+    </div>
+</div>
+<table class="layui-hide" id="list" lay-filter="courtpayorder"></table>
+<div id="detail">
+	<div id="box">
+		<section></section>
+		<section></section>
+		<div class="layui-form-item">
+	        <div class="layui-input-block btn">
+	            <a class="layui-btn" href="javascript:$('#detail').hide()">关闭</a>
+	        </div>
+	    </div>
+	</div>
+</div>
+<script type="text/html" id='handle'>
+    <button class="border-blue button button-little" lay-event="edit">编辑</button>
+    <button class="border-green button button-little" lay-event="detail">详情</button>
+    <button class="border-red button button-little" lay-event="del">删除</button>
+</script>
+<script type="text/javascript">
+    layui.use(['form', 'table', 'laydate'], function() {
+        var form = layui.form,
+            table = layui.table,
+            laydate = layui.laydate;
+        form.render();
+        loader.send_data = 1;
+        // 置空临时参数
+        loader.temp_data = "";
+
+        $('input[name=caseNumber]').val(loader.resp_data.caseNumber || '');
+        $('input[name=amount]').val(loader.resp_data.amount || '');
+        $('input[name=receivablesAccountName]').val(loader.resp_data.receivablesAccountName || '');
+
+        var config = {
+            elem: '#list',
+            where: {
+                userToken: loader.getCookie('token'),
+                caseNumber: loader.resp_data.caseNumber || '',
+                startDateStr: loader.resp_data.startDateStr || '',
+                endDateStr: loader.resp_data.endDateStr || '',
+                amount:loader.resp_data.amount || '',
+                receivablesAccountName:loader.resp_data.receivablesAccountName || ''
+            },
+            url: loader.baseurl + '/courtPayOrder/list',
+            page: true,
+            limit: 10,
+            cols: [
+                [{
+                    fixed: 'left',
+                    templet: '#num_tpl',
+                    width: 60,
+                    title: '序号'
+                }, {
+                    field: 'caseNumber',
+                    width: 200,
+                    title: '案号'
+                }, {
+                    field: 'currency',
+                    width: 80,
+                    sort: true,
+                    title: '币种'
+                }, {
+                    field: 'date',
+                    width: 120,
+                    title: '日期'
+                }, {
+                    field: 'amount',
+                    width: 80,
+                    title: '金额'
+                }, {
+                    field: 'statusStr',
+                    width: 100,
+                    title: '状态'
+                }, {
+                    field: 'receivablesAccountName',
+                    width: 150,
+                    title: '收款账号名称'
+                }, {
+                    field: 'receivablesDepositBank',
+                    width: 180,
+                    title: '收款账号开户行'
+                }, {
+                    field: 'receivablesProvince',
+                    width: 150,
+                    title: '收款账号省份'
+                }, {
+                    field: 'receivablesCity',
+                    width: 150,
+                    title: '收款账号地市'
+                }, {
+                    field: 'receivablesAreaCode',
+                    width: 200,
+                    title: '收款账号地区码'
+                }, {
+                    field: 'receivablesNumber',
+                    width: 200,
+                    title: '收款账号'
+                }, {
+                    field: 'remittanceMode',
+                    width: 200,
+                    title: '付款方式'
+                },{
+                    field: 'paymentDepositBank',
+                    width: 200,
+                    title: '付款账号开户行'
+                },{
+                    field: 'paymentNumber',
+                    width: 200,
+                    title: '付款账号'
+                },{
+                    field: 'paymentName',
+                    width: 200,
+                    title: '付款账号名称'
+                },{
+                    field: 'detailTitle',
+                    width: 200,
+                    title: '明细标志'
+                },{
+                    field: 'receivablesPhone',
+                    width: 200,
+                    title: '收款账号手机号'
+                },{
+                    field: 'remittancePurpose',
+                    width: 150,
+                    title: '汇款用途'
+                }, {
+                    field: 'remarks',
+                    width: 150,
+                    title: '备注信息'
+                }, {
+                    fixed: 'right',
+                    width: 150,
+                    title: '操作',
+                    toolbar: '#handle'
+                }]
+            ],
+            response: {
+                statusCode: 1,  //设置请求成功的状态码
+            },
+            done: function(res) {
+                loader.send_data = 1;
+                loader.fail(res);
+            }
+        };
+
+        var user_list = table.render(config);
+
+        form.on('submit(query)', function(obj) {
+            config.where = obj.field;
+            user_list.reload(config);
+            loader.temp_data = obj.field;
+            return false;
+        });
+
+        //导出
+        form.on('submit(export)', function(obj) {
+            var caseNumber = obj.field.caseNumber || '';
+            var endDateStr = obj.field.endDateStr || '';
+            var startDateStr = obj.field.startDateStr || '';
+            var str = '/courtPayOrder/export?caseNumber=' + caseNumber + '&endDateStr=' + endDateStr + '&startDateStr=' + startDateStr;
+            var tag = $('<a href="" download=""></a>');
+            tag.attr('href', loader.baseurl + str);
+            tag.get(0).click();
+            return false;
+        });
+
+        laydate.render({
+            elem: '#start',
+            value: loader.resp_data.startDateStr || ''
+        });
+        laydate.render({
+            elem: '#end',
+            value: loader.resp_data.endDateStr || ''
+        });
+
+
+        table.on('tool(courtpayorder)', function(obj) {
+            if (obj.event === 'del') { //删除	
+            	loader.resp_data = loader.serialize('#filter');
+                layer.confirm('确定删除这条数据吗？', {
+                    icon: 3,
+                    title: '系统提示'
+                }, function(index) {
+                    layer.close(index);
+                    layer.load();
+                    fun.post(loader.baseurl + '/courtPayOrder/delete', {
+                        id: obj.data.id
+                    }, function(res) {
+                        done(res, '删除成功', '删除失败');
+                    });
+                })
+            }
+            if (obj.event === 'edit') { //编辑
+                loader.temp_data = obj.data;
+                loader.resp_data = loader.serialize('#filter');
+                loader.load('#admin_container', 'data_income_edit.html');
+            }
+            if(obj.event === 'detail'){ //详情
+            	var title = '',val='',sections = $('#box section');
+            	var cols = config.cols[0].slice(1,config.cols[0].length-1);
+            	for(var i = 0,n; n=cols[i++];){
+            		title = n.title+'：';
+            		val = obj.data[n.field]||'';
+            		var domStr = '<div class="item"><span class="name">'+title+'</span>'+
+								 '<span class="right con">'+val+'</span></div>';
+            		if(!(i%2)){
+            			sections.eq(1).append($(domStr));
+            		}else{
+            			sections.eq(0).append($(domStr));
+            			if(i==cols.length){  //单排最后一列
+            				var temp = $(domStr);
+            				temp.find('.name').text('');
+            				temp.find('.con').text('');
+            				sections.eq(1).append(temp);
+            			}
+            		}
+            	}
+            	$('div#detail').css('display','flex');
+            }
+        })
+
+        /**
+         * 请求成功的处理函数
+         * @param res 结果集
+         * @param success 成功提示
+         * @param fail 失败提示
+         * **/
+        var done = function(res, success, fail) {
+            layer.closeAll('loading');
+            var msg = res.msg || (res.code == 1 ? success : fail);
+            layer.msg(msg, {
+                icon: res.code,
+            	end:function() {
+                	if (res.code == 1) loader.load('#admin_container', 'data_income_spending.html'); //刷新当前页面
+            }});
+        }
+
+        loader.resp_data = {};
+
+    });
+</script>

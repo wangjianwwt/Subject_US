@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.born.bc.bankmanager.dao.BankManagerMapper" >
+  <resultMap id="BaseResultMap" type="com.born.bc.bankmanager.entity.BankManager" >
+    <id column="ID" property="id" jdbcType="VARCHAR" />
+    <result column="BANK_NAME" property="bankName" jdbcType="VARCHAR" />
+    <result column="BANK_ACCOUNT" property="bankAccount" jdbcType="VARCHAR" />
+    <result column="COMMENTS" property="comments" jdbcType="VARCHAR" />
+    <result column="FORMMAKER_ID" property="formmakerId" jdbcType="VARCHAR" />
+    <result column="FORMMAKER_NAME" property="formmakerName" jdbcType="VARCHAR" />
+    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="LAST_MODIFIED_TIME" property="lastModifiedTime" jdbcType="TIMESTAMP" />
+    <result column="DEL_STATUS" property="delStatus" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ID, BANK_NAME, BANK_ACCOUNT, COMMENTS, FORMMAKER_ID, FORMMAKER_NAME, 
+    CREATE_TIME, DEL_STATUS
+  </sql>
+  
+  <select id="selectByBanckAccount" parameterType="com.born.bc.bankmanager.entity.BankManager" resultMap="BaseResultMap">
+  	select 
+  		<include refid="Base_Column_List" />
+  	from t_bank_manager
+  	where DEL_STATUS = 0
+  	and BANK_ACCOUNT = #{bankAccount,jdbcType=VARCHAR}
+  	<if test="id != null and id != ''">
+  		and ID &lt;&gt; #{id,jdbcType=VARCHAR}
+  	</if>
+  </select>
+  
+  <select id="selectByList" parameterType="com.born.bc.bankmanager.entity.BankManager" resultMap="BaseResultMap">
+  	select 
+  		<include refid="Base_Column_List" />
+  	from t_bank_manager
+  	where DEL_STATUS = 0
+  	<if test="bankName != null and bankName != ''">
+  		and instr(BANK_NAME,#{bankName,jdbcType=VARCHAR}) &gt; 0
+  	</if>
+  	<if test="bankAccount != null and bankAccount != ''">
+  		and instr(BANK_ACCOUNT,#{bankAccount,jdbcType=VARCHAR}) &gt; 0
+  	</if>
+  </select>
+  
+  <update id="updateDelStatus" parameterType="java.util.List">
+  	update t_bank_manager set DEL_STATUS = 1 where id in 
+  	(
+  		<foreach collection="ids" item="item" index="index" separator=",">
+  			#{item}
+  		</foreach>
+  	)
+  </update>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_bank_manager
+    where ID = #{id,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from t_bank_manager
+    where ID = #{id,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insertSelective" parameterType="com.born.bc.bankmanager.entity.BankManager" >
+    insert into t_bank_manager
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        ID,
+      </if>
+      <if test="bankName != null" >
+        BANK_NAME,
+      </if>
+      <if test="bankAccount != null" >
+        BANK_ACCOUNT,
+      </if>
+      <if test="comments != null">
+      	COMMENTS,
+      </if>
+      <if test="formmakerId != null" >
+        FORMMAKER_ID,
+      </if>
+      <if test="formmakerName != null" >
+        FORMMAKER_NAME,
+      </if>
+      <if test="createTime != null" >
+        CREATE_TIME,
+      </if>
+      <if test="lastModifiedTime != null" >
+        LAST_MODIFIED_TIME,
+      </if>
+      <if test="delStatus != null" >
+        DEL_STATUS,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="bankName != null" >
+        #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankAccount != null" >
+        #{bankAccount,jdbcType=VARCHAR},
+      </if>
+      <if test="comments != null">
+      	#{comments,jdbcType=VARCHAR},
+      </if>
+      <if test="formmakerId != null" >
+        #{formmakerId,jdbcType=VARCHAR},
+      </if>
+      <if test="formmakerName != null" >
+        #{formmakerName,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastModifiedTime != null" >
+        #{lastModifiedTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delStatus != null" >
+        #{delStatus,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.born.bc.bankmanager.entity.BankManager" >
+    update t_bank_manager
+    <set >
+      <if test="bankName != null" >
+        BANK_NAME = #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankAccount != null" >
+        BANK_ACCOUNT = #{bankAccount,jdbcType=VARCHAR},
+      </if>
+      <if test="comments != null">
+      	COMMENTS = #{comments,jdbcType=VARCHAR},
+      </if>
+        LAST_MODIFIED_TIME = now()
+    </set>
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.born.bc.bankmanager.entity.BankManager" >
+    update t_bank_manager
+    set BANK_NAME = #{bankName,jdbcType=VARCHAR},
+      BANK_ACCOUNT = #{bankAccount,jdbcType=VARCHAR},
+      COMMENTS = #{comments,jdbcType=VARCHAR},
+      FORMMAKER_ID = #{formmakerId,jdbcType=VARCHAR},
+      FORMMAKER_NAME = #{formmakerName,jdbcType=VARCHAR},
+      CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},
+      LAST_MODIFIED_TIME = #{lastModifiedTime,jdbcType=TIMESTAMP},
+      DEL_STATUS = #{delStatus,jdbcType=INTEGER}
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

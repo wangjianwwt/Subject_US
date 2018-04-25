@@ -1,0 +1,230 @@
+<link rel="stylesheet" type="text/css" href="easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="easyui/themes/bootstrap/easyui.css">
+<script type="text/javascript" src="easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="easyui/locale/easyui-lang-zh_CN.js"></script>
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    form {
+        padding-top: 15px !important;
+        padding-left: 15px !important;
+    }
+    .panel {
+        margin-bottom: 10px;
+    }
+    .button-little{padding: 1px 5px !important;}
+    /**查看历史**/
+   	div#history-box{left:0px;right: 0px;top:0px;bottom: 0px;position: fixed;width: 100%;height: 100%;background: url(images/shade.png) repeat;
+	display: flex;justify-content: center;align-items: center;display: none;}
+	div#history-box section{width: 400px;border-radius:5px;background: white;margin: 0 auto;float: left;padding: 20px;color: #666;
+	font: 14px/36px "microsoft yahei";box-sizing: border-box;overflow: auto;max-height:500px;overflow: auto;}
+	div#history-box .item{height: 36px;border-bottom: solid 1px gainsboro;padding: 0px 5px;}
+	div#history-box .con{color: #666;float: right;}
+	.btn{margin-top: 25px;margin-left: 0px;text-align: center;}
+</style>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>科目维护管理</strong>
+    </div>
+    <!--<div class="panel-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <div class="layui-input-inline">
+                    <input type="text" name="transactionTime" id="time" lay-verify="transactionTime" autocomplete="off" placeholder="选择时间" class="layui-input">
+                </div>
+                <div class="layui-input-block">
+                    <button type="submit" class="button bg-yellow" lay-submit='' lay-filter="query">查询</button>
+                    <a class="button bg-main" href="#">导出</a>
+                    <a class="button bg-green" href="#">打印</a>
+                    <button type="submit" class="button bg-mix" lay-submit="" lay-filter="count">结算</button>
+                </div>
+            </div>
+        </form>
+    </div>-->
+    <div class="panel-head">
+        <a class="button bg-main" href="javascript:loader.load('#admin_container','ability_subject_add.html')">新增科目</a>
+    </div>
+</div>
+<table id="list"></table>
+<div id="history-box">
+	<section>
+		<div class="item">
+			<span class="name">本方账号：</span>
+			<span class="right con"></span>
+		</div>
+		<div class="item">
+			<span class="name">对方账号：</span>
+			<span class="right con"></span>
+		</div>
+		<div class="item">
+			<span class="name">对方行号：</span>
+			<span class="right con"></span>
+		</div>
+		<div class="item">
+			<span class="name">用途：</span>
+			<span class="right con"></span>
+		</div>
+		<div class="item">
+			<span class="name">对方单位名称：</span>
+			<span class="right con"></span>
+		</div>
+		<div class="item">
+			<span class="name">余额：</span>
+			<span class="right con"></span>
+		</div>
+		<div class="layui-form-item">
+	        <div class="layui-input-block btn">
+	            <a class="layui-btn" href="javascript:$('#history-box').hide()">关闭</a>
+	        </div>
+	    </div>
+	</section>
+</div>
+<script type="text/javascript">
+	Vue.component('history',{
+		template:'#history'
+	})
+    layui.use(['form', 'laydate'], function() {
+        var form = layui.form,
+            table = layui.table,
+            laydate = layui.laydate;
+    	var date = new Date();
+        
+		var config = function(data){
+			var fileArray = [];
+
+            for (var i = 0; i < data.length; i++) {
+                fileArray.push({
+                    scode: data[i].s_code,
+                    name: data[i].s_name,
+                    id: data[i].id,
+                    qcs:data[i].qcs,
+                    type: data[i].type,
+                    _parentId:data[i].parent_id
+                })
+            }
+
+            $('#list').treegrid({
+                idField: 'scode',
+                treeField: 'name',
+                animate: true,
+                fitColumns: true,
+                lines: true,
+                columns: [
+                    [{
+                        field: 'scode',
+                        title: '科目编号',
+                        width: 80
+                    }, {
+                        field: 'name',
+                        title: '科目名称',
+                        width: 150
+                    }, {
+                        field: 'qcs',
+                        title: '期初数',
+                        width: 90
+                    },{
+                        field: 'type',
+                        title: '类型',
+                        width: 70
+                    },{
+                    	field:'cz',
+                    	title:'操作',
+                    	width:150,
+                    	align:'center',
+                    	formatter:function(){
+                    		return '<a class="border-blue button button-little edit" href="javascript:;">编辑</a>'+
+                    		"<a style='margin-left:5px' class='border-red button button-little del' href='javascript:;'>删除</a>"+
+                    		"<a style='margin-left:5px' class='border-yellow button button-little history' href='javascript:;'>查看历史用命</a>";
+                    	}
+                    }]
+                ],
+                onClickRow: function(row) {
+                	loader.temp_data = row;
+                },
+                data: {
+                    total: fileArray.length,
+                    rows: fileArray
+                },
+                onLoadSuccess:function(row,data){
+//              	loader.fail(data);
+                }
+            });
+		}
+
+        //treegrid部分
+        ! function() {
+            var data = {
+            	userToken: loader.getCookie('token'),
+//          	transactionTime:date.getFullYear()+'-'+(date.getMonth()+1)
+            }
+            fun.post(loader.baseurl + '/subject/subjectList',data, function(rs) {
+            	if(rs.data){
+            		config(rs.data);
+            	}else{
+            		layer.msg(rs.msg || '无数据！');
+            	}
+            })
+        }();
+
+
+		//删除
+		$('body').off().on('click','a.del',function(){
+			layer.confirm('确定删除这条数据吗？', {
+                icon: 3,
+                title: '系统提示'
+            }, function(index) {
+                layer.close(index);
+                layer.load();
+                fun.post(loader.baseurl + '/subject/del', {id:loader.temp_data.id}, function(res) {
+                    done(res, '删除成功', '删除失败');
+                });
+            });
+		});
+		
+		//编辑
+		$('body').on('click','a.edit',function(){
+			loader.load('#admin_container','ability_subject_edit.html');
+		});
+		
+		
+		//查看修改历史
+		$('body').on('click','a.history',function(){
+			loader.load('#admin_container','ability_subject_history.html');
+		});
+
+		/**
+         * 请求成功的处理函数
+         * @param res 结果集
+         * @param success 成功提示
+         * @param fail 失败提示
+         * **/
+        var done = function(res, success, fail) {
+            layer.closeAll('loading');
+            var msg = res.msg || (res.code == 1 ? success : fail);
+            layer.msg(msg, {
+                icon: res.code,
+            	end:function() {
+                if (res.code == 1)
+                    loader.load('#admin_container', 'ability_subject_list.html'); //刷新当前页面
+            }});
+        };
+
+        //数据筛选
+//      form.on('submit(query)', function(obj) {
+//          obj.field.userToken = loader.getCookie('token');
+//          fun.post(loader.baseurl + '/cwtz/srList',obj.field, function(rs) {
+//              config(rs.data);
+//          })
+//          return false;
+//      });
+		
+    });
+
+</script>

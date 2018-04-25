@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.born.bc.caseinfo.dao.CaseInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.born.bc.caseinfo.entity.CaseInfo" >
+    <id column="ID" property="id" jdbcType="VARCHAR" />
+    <result column="CASE_NUMBER" property="caseNumber" jdbcType="VARCHAR" />
+    <result column="MONEY_NATURE_ID" property="moneyNatureId" jdbcType="VARCHAR" />
+    <result column="MONEY_NATURE_CODE" property="moneyNatureCode" jdbcType="VARCHAR" />
+    <result column="MONEY_NATURE_NAME" property="moneyNatureName" jdbcType="VARCHAR" />
+    <result column="RECEIVABLE_AMOUNT" property="receivableAmount" jdbcType="DECIMAL" />
+    <result column="ACTUAL_AMOUNT" property="actualAmount" jdbcType="DECIMAL" />
+    <result column="DIFF_AMOUNT" property="diffAmount" jdbcType="DECIMAL" />
+    <result column="PROCESS_STATUS" property="processStatus" jdbcType="INTEGER" />
+    <result column="CREATE_CHANNEL" property="createChannel" jdbcType="INTEGER" />
+    <result column="FORMMAKER_ID" property="formmakerId" jdbcType="VARCHAR" />
+    <result column="FORMMAKER_NAME" property="formmakerName" jdbcType="VARCHAR" />
+    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="LAST_MODIFIED_TIME" property="lastModifiedTime" jdbcType="TIMESTAMP" />
+    <result column="DEL_STATUS" property="delStatus" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ID, CASE_NUMBER, MONEY_NATURE_ID, MONEY_NATURE_CODE, MONEY_NATURE_NAME, RECEIVABLE_AMOUNT, 
+    ACTUAL_AMOUNT, DIFF_AMOUNT, PROCESS_STATUS, CREATE_CHANNEL, FORMMAKER_ID, FORMMAKER_NAME, CREATE_TIME
+  </sql>
+  <select id="selectHaveCaseInDB" parameterType="java.lang.String" resultType="java.lang.Integer" >
+        SELECT
+            count(1) num
+        FROM
+            (
+                SELECT
+                    CASE_ID,
+                    CASE_NUMBER
+                FROM
+                    t_dt_inter_pay
+                WHERE
+                    CASE_ID = #{caseId, jdbcType=VARCHAR}
+                UNION
+                    SELECT
+                        CASE_ID,
+                        CASE_NUMBER
+                    FROM
+                        t_dt_pos_pay
+                    WHERE
+                        CASE_ID = #{caseId, jdbcType=VARCHAR}
+                    UNION
+                        SELECT
+                            CASE_ID,
+                            CASE_NUMBER
+                        FROM
+                            t_court_pay_order
+                        WHERE
+                            CASE_ID = #{caseId, jdbcType=VARCHAR}
+            ) tab
+  </select>
+
+  <select id="selectByList" parameterType="com.born.bc.caseinfo.entity.CaseInfoParamDto" resultMap="BaseResultMap">
+  	
+	SELECT
+		ID,
+		CASE_NUMBER,
+		MONEY_NATURE_ID,
+		MONEY_NATURE_CODE,
+		MONEY_NATURE_NAME,
+		RECEIVABLE_AMOUNT,
+		PROCESS_STATUS,
+		CREATE_CHANNEL,
+		ACTUAL_AMOUNT,
+		(
+			RECEIVABLE_AMOUNT - ACTUAL_AMOUNT
+		) "DIFF_AMOUNT"
+	FROM
+		(
+			SELECT
+				c.ID,
+				c.CASE_NUMBER,
+				c.MONEY_NATURE_ID,
+				c.MONEY_NATURE_CODE,
+				c.MONEY_NATURE_NAME,
+				c.PROCESS_STATUS,
+				c.CREATE_CHANNEL,
+				IFNULL(c.RECEIVABLE_AMOUNT, 0) "RECEIVABLE_AMOUNT",
+				SUM(
+					IFNULL(p.TRANSATION_PRICE, 0) + (IFNULL(i.DEBIT_PRICE, 0) - IFNULL(i.CREDIT_PRICE, 0))
+				) "ACTUAL_AMOUNT",
+				c.CREATE_TIME
+			FROM
+				t_case_info c
+			LEFT JOIN t_dt_pos_pay p ON c.ID = p.CASE_ID
+			LEFT JOIN t_dt_inter_pay i ON c.ID = i.CASE_ID
+			WHERE
+				IFNULL(c.DEL_STATUS, 0) = 0
+			AND IFNULL(i.DEL_STATUS, 0) = 0
+			AND IFNULL(p.DEL_STATUS, 0) = 0
+			AND IFNULL(i.IS_SPLIT,0) = 0
+			<if test="caseNumber != null and caseNumber != ''">
+	    		and instr(c.CASE_NUMBER, #{caseNumber, jdbcType=VARCHAR}) &gt; 0
+	    	</if>
+	    	<if test="processStatus != null">
+	    		and c.PROCESS_STATUS = #{processStatus, jdbcType=INTEGER}
+	    	</if>
+			GROUP BY
+				c.ID,
+				c.CASE_NUMBER,
+				c.MONEY_NATURE_ID,
+				c.MONEY_NATURE_NAME,
+				c.RECEIVABLE_AMOUNT,
+				c.PROCESS_STATUS,
+				c.CREATE_CHANNEL
+		) tb ORDER BY CREATE_TIME DESC
+		
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_case_info
+    where ID = #{id,jdbcType=VARCHAR}
+  </select>
+  <update id="updateDelStatusByPrimaryKey" parameterType="java.lang.String" >
+    update t_case_info set DEL_STATUS = 1 , LAST_MODIFIED_TIME = current_timestamp() 
+    where DEL_STATUS = 0 and ID = #{id,jdbcType=VARCHAR}
+  </update>
+  <insert id="insertSelective" parameterType="com.born.bc.caseinfo.entity.CaseInfo" >
+    insert into t_case_info
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+        ID,
+      <if test="caseNumber != null" >
+        CASE_NUMBER,
+      </if>
+      <if test="moneyNatureId != null" >
+        MONEY_NATURE_ID,
+      </if>
+      <if test="moneyNatureCode != null" >
+        MONEY_NATURE_CODE,
+      </if>
+      <if test="moneyNatureName != null" >
+        MONEY_NATURE_NAME,
+      </if>
+      <if test="receivableAmount != null" >
+        RECEIVABLE_AMOUNT,
+      </if>
+      <if test="actualAmount != null" >
+        ACTUAL_AMOUNT,
+      </if>
+      <if test="diffAmount != null" >
+        DIFF_AMOUNT,
+      </if>
+      <if test="processStatus != null" >
+        PROCESS_STATUS,
+      </if>
+      <if test="createChannel != null" >
+        CREATE_CHANNEL,
+      </if>
+      <if test="formmakerId != null" >
+        FORMMAKER_ID,
+      </if>
+      <if test="formmakerName != null" >
+        FORMMAKER_NAME,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+        #{id,jdbcType=VARCHAR},
+      <if test="caseNumber != null" >
+        #{caseNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="moneyNatureId != null" >
+        #{moneyNatureId,jdbcType=VARCHAR},
+      </if>
+      <if test="moneyNatureCode != null" >
+        #{moneyNatureCode,jdbcType=VARCHAR},
+      </if>
+      <if test="moneyNatureName != null" >
+        #{moneyNatureName,jdbcType=VARCHAR},
+      </if>
+      <if test="receivableAmount != null" >
+        #{receivableAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="actualAmount != null" >
+        #{actualAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="diffAmount != null" >
+        #{diffAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="processStatus != null" >
+        #{processStatus,jdbcType=INTEGER},
+      </if>
+      <if test="createChannel != null" >
+        #{createChannel,jdbcType=INTEGER},
+      </if>
+      <if test="formmakerId != null" >
+        #{formmakerId,jdbcType=VARCHAR},
+      </if>
+      <if test="formmakerName != null" >
+        #{formmakerName,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.born.bc.caseinfo.entity.CaseInfo" >
+    update t_case_info
+    <set >
+      <if test="caseNumber != null" >
+        CASE_NUMBER = #{caseNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="moneyNatureId != null" >
+        MONEY_NATURE_ID = #{moneyNatureId,jdbcType=VARCHAR},
+      </if>
+      <if test="moneyNatureCode != null" >
+        MONEY_NATURE_CODE = #{moneyNatureCode,jdbcType=VARCHAR},
+      </if>
+      <if test="moneyNatureName != null" >
+        MONEY_NATURE_NAME = #{moneyNatureName,jdbcType=VARCHAR},
+      </if>
+      <if test="receivableAmount != null" >
+        RECEIVABLE_AMOUNT = #{receivableAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="actualAmount != null" >
+        ACTUAL_AMOUNT = #{actualAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="diffAmount != null" >
+        DIFF_AMOUNT = #{diffAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="processStatus != null" >
+        PROCESS_STATUS = #{processStatus,jdbcType=INTEGER},
+      </if>
+      <if test="createChannel != null" >
+        CREATE_CHANNEL = #{createChannel,jdbcType=INTEGER},
+      </if>
+        LAST_MODIFIED_TIME = current_timestamp()
+    </set>
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+  
+  <select id="getCaseInfoByCaseNumbers" parameterType="java.util.List" resultMap="BaseResultMap">
+  	select 
+  		<include refid="Base_Column_List" />
+  	from t_case_info where CASE_NUMBER in (
+	  	<foreach collection="list" item="item" index="index" separator=",">
+	  		#{item,jdbcType=VARCHAR}
+	  	</foreach>
+  	) and DEL_STATUS = 0
+  </select>
+  
+  <select id="checkCaseNumberOnly" parameterType="java.lang.String" resultType="java.lang.Integer">
+  	select count(1) from t_case_info where instr(CASE_NUMBER, #{caseNumber,jdbcType=VARCHAR}) > 0 and DEL_STATUS = 0
+  </select>
+  
+  <select id="getCaseLoser" resultType="java.util.Map">
+  	select 
+  		ID id, CASE_NUMBER name
+  	from t_case_info where DEL_STATUS = 0
+  </select>
+  
+  <select id="checkCaseHave" parameterType="java.util.Set" resultType="java.lang.String">
+  	select 
+  		CASE_NUMBER
+  	from t_case_info where DEL_STATUS = 0
+  	and CASE_NUMBER in (
+  		<foreach collection="sets" item="item" index="index" separator=",">
+	  		#{item,jdbcType=VARCHAR}
+	  	</foreach>
+  	)
+  </select>
+  
+  <insert id="batchInsert" parameterType="java.util.List">
+  	insert into t_case_info(
+        ID,
+        CASE_NUMBER,
+        MONEY_NATURE_ID,
+        MONEY_NATURE_CODE,
+        MONEY_NATURE_NAME,
+        RECEIVABLE_AMOUNT,
+        ACTUAL_AMOUNT,
+        DIFF_AMOUNT,
+        PROCESS_STATUS,
+        CREATE_CHANNEL,
+        FORMMAKER_ID,
+        FORMMAKER_NAME
+        ) values
+        <foreach collection="cases" item="item" index="index" separator=",">
+        	(
+        	#{item.id,jdbcType=VARCHAR},
+	        #{item.caseNumber,jdbcType=VARCHAR},
+	        #{item.moneyNatureId,jdbcType=VARCHAR},
+	        #{item.moneyNatureCode,jdbcType=VARCHAR},
+	        #{item.moneyNatureName,jdbcType=VARCHAR},
+	        #{item.receivableAmount,jdbcType=DECIMAL},
+	        #{item.actualAmount,jdbcType=DECIMAL},
+	        #{item.diffAmount,jdbcType=DECIMAL},
+	        #{item.processStatus,jdbcType=INTEGER},
+	        #{item.createChannel,jdbcType=INTEGER},
+	        #{item.formmakerId,jdbcType=VARCHAR},
+	        #{item.formmakerName,jdbcType=VARCHAR}
+	        )
+        </foreach>
+  </insert>
+  
+  
+  <select id="havingBalance" resultType="java.util.Map">
+  	SELECT
+		ID "id",
+		CASE_NUMBER "caseNumber",
+		(RECEIVABLE_AMOUNT - ACTUAL_AMOUNT) "balance"
+	FROM
+		(
+			SELECT
+				c.ID,
+				c.CASE_NUMBER,
+				IFNULL(c.RECEIVABLE_AMOUNT, 0) "RECEIVABLE_AMOUNT",
+				SUM(
+					IFNULL(p.TRANSATION_PRICE, 0) + (
+						IFNULL(i.DEBIT_PRICE, 0) - IFNULL(i.CREDIT_PRICE, 0)
+					)
+				) "ACTUAL_AMOUNT"
+			FROM
+				t_case_info c
+			LEFT JOIN t_dt_pos_pay p ON c.ID = p.CASE_ID
+			LEFT JOIN t_dt_inter_pay i ON c.ID = i.CASE_ID
+			WHERE
+				IFNULL(c.DEL_STATUS, 0) = 0
+			AND IFNULL(i.DEL_STATUS, 0) = 0
+			AND IFNULL(i.IS_SPLIT,0) = 0
+			AND IFNULL(p.DEL_STATUS, 0) = 0
+			GROUP BY
+				c.ID,
+				c.CASE_NUMBER,
+				c.RECEIVABLE_AMOUNT
+		) t
+  </select>
+  
+  <select id="caseDetail" parameterType="java.lang.String" resultType="java.util.Map">
+  	SELECT
+		DATE_FORMAT(TRANSACTION_TIME,'%Y-%m-%d %H:%i:%s') "datetime",
+		CASE_NUMBER "caseNumber",
+		SUBJECT_NAME "subjectName",
+		ABSTRACT_INFO "abstractInfo",
+		IFNULL(CREDIT_PRICE, 0) "expenditure",
+		IFNULL(DEBIT_PRICE, 0) "income",
+		(
+			IFNULL(DEBIT_PRICE, 0) - IFNULL(CREDIT_PRICE, 0)
+		) "balance"
+	FROM
+		t_dt_inter_pay
+	WHERE
+		IFNULL(DEL_STATUS, 0) = 0
+		AND IFNULL(IS_SPLIT,0) = 0
+		AND CASE_ID = #{id,jdbcType=VARCHAR}
+	UNION ALL
+		SELECT
+			DATE_FORMAT(TRANSACTION_TIME,'%Y-%m-%d %H:%i:%s') "datetime",
+			CASE_NUMBER "caseNumber",
+			SUBJECT_NAME "subjectName",
+			ABSTRACT_INFO "abstractInfo",
+			TRANSATION_PRICE "income",
+			0 "expenditure",
+			TRANSATION_PRICE "balance"
+		FROM
+			t_dt_pos_pay
+		WHERE
+			IFNULL(DEL_STATUS, 0) = 0
+			AND CASE_ID = #{id,jdbcType=VARCHAR}
+  </select>
+  
+</mapper>

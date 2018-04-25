@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.born.bc.task.dao.TaskMapper">
+    
+    <select id="findNotCompleteInterPay" resultType="com.born.bc.task.entity.CompletionCaseNumberDto">
+    	SELECT
+			a.ID interId,
+			b.CASE_ID caseId,
+			b.CASE_NUMBER caseNumber
+		FROM
+			t_dt_inter_pay a
+		INNER JOIN t_court_pay_order b ON a.PARTY_NUMBER = b.RECEIVABLES_NUMBER
+		AND a.CORPORATE_NAME = b.RECEIVABLES_ACCOUNT_NAME
+		<!-- 贷方发生额（支出） 等于 支出单的金额 -->
+		AND (a.CREDIT_PRICE = b.AMOUNT or a.DEBIT_PRICE = b.AMOUNT)
+		WHERE (a.CASE_ID IS NULL or a.CASE_ID = '') or (a.CASE_NUMBER is NULL or a.CASE_NUMBER = '') 
+    </select>
+    
+    <select id="findNotCompletePosPay" resultType="java.util.Map">
+    	SELECT
+			a.ID "id",
+			b.ID "caseId",
+			b.CASE_NUMBER "caseNumber"
+		FROM
+			t_dt_pos_pay a
+		INNER JOIN t_case_info b ON a.CASE_NUMBER = b.CASE_NUMBER
+		WHERE
+			a.DEL_STATUS = 0
+		AND b.DEL_STATUS = 0
+		AND (
+			a.CASE_ID IS NULL
+			OR a.CASE_ID = ''
+		)
+    </select>
+    
+    <update id="updateInterPayCaseInfo" parameterType="java.util.List">
+	    <foreach collection="list" item="item" index="index" separator=";">
+	    	update t_dt_inter_pay 
+	    	set 
+	    		CASE_ID = #{item.caseId, jdbcType=VARCHAR}, 
+	    		CASE_NUMBER = #{item.caseNumber, jdbcType=VARCHAR} 
+	    	where ID = #{item.interId, jdbcType=VARCHAR}
+	    </foreach>
+    </update>
+    
+    <update id="updatePosPayCaseInfo" parameterType="java.util.List">
+	    <foreach collection="list" item="item" index="index" separator=";">
+	    	update t_dt_pos_pay 
+	    	set 
+	    		CASE_ID = #{item.caseId, jdbcType=VARCHAR}, 
+	    		CASE_NUMBER = #{item.caseNumber, jdbcType=VARCHAR} 
+	    	where ID = #{item.id, jdbcType=VARCHAR}
+	    </foreach>
+    </update>
+    
+    
+</mapper>

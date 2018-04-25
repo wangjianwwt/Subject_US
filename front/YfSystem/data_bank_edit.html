@@ -1,0 +1,117 @@
+<style type="text/css">
+    .layui-form-label {
+        width: 125px;
+    }
+    
+    .remark {
+        width: 840px !important;
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    .layui-this {
+        background: #1184c3 !important;
+    }
+    
+    #tree_box {
+        border: solid 1px #C2C2C2;
+        position: absolute !important;
+        height: auto;
+        overflow: auto;
+        z-index: 9999 !important;
+        background: white;
+        width: 100%;
+        margin-top: 3px;
+        overflow-x: scroll;
+        display: none;
+    }
+</style>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>编辑银行</strong>
+    </div>
+    <div class="panel-body" id="edit_ctrl">
+        <form class="layui-form" action="" style="margin-top: 10px;">
+            <div class="layui-form-item">
+                <label class="layui-form-label">银行名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="bankName" v-model="bank.bankName" lay-verify="required" autocomplete="off" placeholder="请输入银行名称" class="layui-input">
+                </div>
+                <label class="layui-form-label">银行账号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="bankAccount" v-model="bank.bankAccount" lay-verify="required" autocomplete="off" placeholder="请输入银行账号" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">备注信息</label>
+                <div class="layui-input-inline remark">
+                    <textarea placeholder="请输入内容" name="comments" class="layui-textarea"></textarea>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit="" lay-filter="addbank">确认提交</button>
+                    <a class="layui-btn layui-btn-primary" href="javascript:loader.load('#admin_container','data_bank_maintain.html')">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    layui.use(['form', 'laydate', 'tree'], function() {
+        var form = layui.form,
+            laydate = layui.laydate;
+
+        //addressInit('province','city','county');  //地址级联
+
+        form.on('submit(addbank)', function(obj) {
+            var data = obj.field;
+            data.id = loader.temp_data.id;
+            data.userToken = loader.getCookie('token');
+            layer.load();
+            fun.post(loader.baseurl + '/bankManager/edit', data, function(res) {
+                layer.closeAll('loading');
+                if (typeof(res) == 'object') {
+                    if (res.code == 1) {
+                        layer.msg(res.msg, {
+                            icon: 1,
+                            end: function() {
+                                $(obj.elem).next().get(0).click();
+                            }
+                        });
+                    } else {
+                        layer.alert(res.msg, {
+                            icon: 2
+                        }, function(i) {
+                            layer.close(i);
+                        });
+                    }
+                }
+            })
+            return false;
+        });
+
+        edit_ctrl = new Vue({
+            el: "#edit_ctrl",
+            data: {
+                bank: loader.temp_data
+            },
+            methods: {
+
+            },
+            created: function() {
+
+            },
+            updated: function() {}
+        });
+
+        form.render('select');
+
+    });
+</script>

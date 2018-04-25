@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.born.bc.pzcx.dao.PzcxMapper">
+
+<resultMap id="PzcxResultMap" type="com.born.bc.pzcx.entity.PzcxParamDto" >
+	    <id column="ID" property="id" jdbcType="VARCHAR" />
+	    <result column="VOUCHER_NO" property="voucherNo" jdbcType="VARCHAR" />
+	    <result column="LOCAL_NUMBER" property="localNumber" jdbcType="VARCHAR" />
+	    <result column="PARTY_NUMBER" property="partyNumber" jdbcType="VARCHAR" />
+	    <result column="TRANSACTION_TIME" property="transactionTime" jdbcType="VARCHAR" />
+	    <result column="BORROW_OR_LEND" property="borrowOrLend" jdbcType="VARCHAR" />
+	    <result column="DEBIT_PRICE" property="debitPrice" jdbcType="VARCHAR" />
+	    <result column="CREDIT_PRICE" property="creditPrice" jdbcType="VARCHAR" />
+	    <result column="PARTY_LINE_NUMBER" property="partyLineNumber" jdbcType="VARCHAR" />
+	    <result column="ABSTRACT_INFO" property="abstractInfo" jdbcType="VARCHAR" />
+	    <result column="PURPOSE" property="purpose" jdbcType="VARCHAR" />
+	    <result column="CORPORATE_NAME" property="corporateName" jdbcType="VARCHAR" />
+	    <result column="BALANCE" property="balance" jdbcType="VARCHAR" />
+	    <result column="INDIVIDUATION" property="individuation" jdbcType="VARCHAR" />
+	    <result column="CASE_ID" property="caseId" jdbcType="VARCHAR" />
+	    <result column="CASE_NUMBER" property="caseNumber" jdbcType="VARCHAR" />
+	    <result column="SUBJECT_ID" property="subjectId" jdbcType="VARCHAR" />
+	    <result column="SUBJECT_NAME" property="subjectName" jdbcType="VARCHAR" />
+	    <result column="DEPARTMENT_NAME" property="departmentName" jdbcType="VARCHAR" />
+	    <result column="UNDERTAKER" property="undertaker" jdbcType="VARCHAR" />
+	    <result column="IS_EDIT" property="isEdit" jdbcType="INTEGER" />
+	    <result column="BATCH_NUMBER" property="batchNumber" jdbcType="VARCHAR" />
+	    <result column="FORMMAKER_ID" property="formmakerId" jdbcType="VARCHAR" />
+	    <result column="FORMMAKER_NAME" property="formmakerName" jdbcType="VARCHAR" />
+	    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+	    <result column="LAST_MODIFIED_TIME" property="lastModifiedTime" jdbcType="TIMESTAMP" />
+	    <result column="DEL_STATUS" property="delStatus" jdbcType="INTEGER" />
+	  </resultMap>
+
+
+	<select id="getPzcxList" parameterType="com.born.bc.pzcx.entity.PzcxParamDto" resultMap="PzcxResultMap">
+		SELECT * FROM
+		(SELECT * FROM(
+		SELECT SUBJECT_ID,SUBJECT_NAME,CASE_NUMBER,DATE_FORMAT(TRANSACTION_TIME,'%Y-%m-%d')TRANSACTION_TIME,CORPORATE_NAME,DEBIT_PRICE,CREDIT_PRICE FROM t_dt_inter_pay where IS_SPLIT = 0
+		UNION ALL
+		SELECT SUBJECT_ID,SUBJECT_NAME,CASE_NUMBER,DATE_FORMAT(TRANSACTION_TIME,'%Y-%m-%d')TRANSACTION_TIME,RECEIVABLES_NUMBER,TRANSATION_PRICE,0 FROM t_dt_pos_pay)a		
+		WHERE 1=1
+		<if test="transactionTime != null and transactionTime != ''" >
+        	and TRANSACTION_TIME=#{transactionTime}
+      	</if>
+		)t
+		JOIN 
+		(SELECT s.ID,s.S_CODE,s.S_NAME,s.PARENT_ID AS parentId FROM t_subject s WHERE 
+		s.S_CODE NOT IN
+		(SELECT PARENT_ID FROM t_subject WHERE PARENT_ID IS NOT NULL))t1
+		ON t.SUBJECT_ID=t1.ID
+		
+	</select>
+	
+	<select id="getSumList" parameterType="com.born.bc.pzcx.entity.PzcxParamDto" resultType="com.born.bc.pzcx.entity.PzcxParamDto">
+		SELECT S_CODE subjectCode,S_NAME subjectName,SUM(DEBIT_PRICE) srSum,SUM(CREDIT_PRICE) zcSum FROM
+		(SELECT * FROM(
+		SELECT SUBJECT_ID,CASE_NUMBER,DATE_FORMAT(TRANSACTION_TIME,'%Y-%m-%d')TRANSACTION_TIME,CORPORATE_NAME,DEBIT_PRICE,CREDIT_PRICE FROM t_dt_inter_pay where IS_SPLIT = 0
+		UNION ALL
+		SELECT SUBJECT_ID,CASE_NUMBER,DATE_FORMAT(TRANSACTION_TIME,'%Y-%m-%d')TRANSACTION_TIME,ABSTRACT_INFO,TRANSATION_PRICE,0 FROM t_dt_pos_pay)a		
+		WHERE 1=1
+		<if test="transactionTime != null and transactionTime != ''" >
+        	and TRANSACTION_TIME=#{transactionTime}
+      	</if>
+		)t
+		 JOIN 
+		(SELECT s.ID,s.S_CODE,s.S_NAME FROM t_subject s WHERE 
+		s.S_CODE NOT IN
+		(SELECT PARENT_ID FROM t_subject WHERE PARENT_ID IS NOT NULL))t1
+		ON t.SUBJECT_ID=t1.ID
+		GROUP BY t1.S_CODE
+	</select>
+	
+</mapper>

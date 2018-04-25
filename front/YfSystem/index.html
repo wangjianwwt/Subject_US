@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />-->
+    <meta name="renderer" content="webkit">
+    <title>银法对接系统</title>
+    <link rel="stylesheet" href="layui/css/layui.css" />
+    <link rel="stylesheet" href="css/pintuer.css" />
+    <link rel="stylesheet" href="css/common.css" />
+    <style type="text/css">
+        div.modify {
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            bottom: 0px;
+            top: 0px;
+            left: 0px;
+            right: 0px;
+            background: url(images/shade.png) repeat;
+            display: none;
+            z-index: 9999;
+        }
+        
+        div.modify form {
+            width: 500px;
+            height: 300px;
+            position: relative;
+            left: 50%;
+            margin-left: -250px;
+            top: 50%;
+            margin-top: -150px;
+            background: white;
+            box-sizing: border-box;
+            border-radius: 5px;
+            padding: 50px 30px;
+        }
+        
+        div.modify .layui-form-label {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+        
+        div.modify .layui-input-block {
+            margin-left: 80px !important;
+        }
+        
+        div.modify .modify-btn {
+            text-align: center;
+            margin-left: 0px !important;
+        }
+    </style>
+</head>
+
+<body style="background-color:#f2f9fd;">
+    <div class="header bg-main" id="index">
+        <div class="logo margin-big-left fadein-top">
+            <h1><img src="images/logo.png" height="50" alt="" />银法对接系统</h1>
+        </div>
+        <div class="float-right layui-nav margin-big-right fadein-top">
+            <div class="logo">
+                <img src="images/y.jpg" class="radius-circle rotate-hover" height="40" alt="" />
+            </div>
+            <div class="layui-nav-item" lay-unselect="">
+                <a href="javascript:;">你好,<span class="nickname">{{uname}}<span></a>
+                <dl class="layui-nav-child">
+                    <dd><a href="javascript:;" @click="home">系统首页</a></dd>
+                    <dd><a href="javascript:;" @click="modify">修改密码</a></dd>
+                    <dd><a href="javascript:;" @click="logout">退出登录</a></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="leftnav">
+        <div class="leftnav-title"><strong><span class="icon-list"></span>菜单列表</strong></div>
+        <h2><span class="icon-gear"></span>银行数据导入</h2>
+        <ul style="display: block;">
+            <li><a href="javascript:loader.load('#admin_container','data_income_spending.html')"><span class="icon-caret-right"></span>支付录入</a></li>
+            <li><a href="javascript:loader.load('#admin_container','data_post_preserve.html')"><span class="icon-caret-right"></span>pos数据维护</a></li>
+            <li><a href="javascript:loader.load('#admin_container','data_ebank_preserve.html')"><span class="icon-caret-right"></span>网银数据维护</a></li>
+        </ul>
+        <h2><span class="icon-gavel"></span>个案核算</h2>
+        <ul>
+            <li><a href="javascript:loader.load('#admin_container','case_list.html')"><span class="icon-caret-right"></span>个案列表</a></li>
+            <!--<li><a href="javascript:loader.load('#admin_container','case_detail.html')"><span class="icon-caret-right"></span>个案明细</a></li>-->
+        </ul>
+        <h2><span class="icon-user"></span>系统管理</h2>
+        <ul>
+            <li><a href="javascript:loader.load('#admin_container','ability_user_list.html')"><span class="icon-caret-right"></span>用户管理</a></li>
+            <li><a href="javascript:loader.load('#admin_container','ability_role_list.html')"><span class="icon-caret-right"></span>角色管理</a></li>
+            <li><a href="javascript:loader.load('#admin_container','ability_resource_list.html')"><span class="icon-caret-right"></span>资源管理</a></li>
+            <li><a href="javascript:loader.load('#admin_container','data_bank_maintain.html')"><span class="icon-caret-right"></span>银行管理</a></li>
+            <li><a href="javascript:loader.load('#admin_container','ability_subject_list.html')"><span class="icon-caret-right"></span>科目维护</a></li>
+        </ul>
+        <h2><span class="icon-usd"></span>财务报表</h2>
+        <ul>
+            <li><a href="javascript:loader.load('#admin_container','finance_subject_list.html')"><span class="icon-caret-right"></span>科目明细统计</a></li>
+            <li><a href="javascript:loader.load('#admin_container','finance_month_list.html')"><span class="icon-caret-right"></span>月收入统计</a></li>
+            <li><a href="javascript:loader.load('#admin_container','finance_property_list.html')"><span class="icon-caret-right"></span>资产负债情况</a></li>
+        </ul>
+        <h2><span class="icon-pencil-square-o"></span>业务分析</h2>
+        <ul>
+            <li><a href="javascript:loader.load('#admin_container','finance_pzdy_list.html')"><span class="icon-caret-right"></span>财务处理</a></li>
+        </ul>
+    </div>
+    <ul class="bread">
+        <li><a href="javascript:void(0);" class="icon-home">银法对接系统</a></li>
+        <li><a href="javascript:void(0);" id="a_leader_txt">系统首页</a></li>
+    </ul>
+    <div id="admin_container"></div>
+    <div class="modify">
+        <form method="" class="layui-form">
+            <div class="layui-form-item">
+                <label class="layui-form-label">原始密码</label>
+                <div class="layui-input-block">
+                    <input type="password" name="oldPassword" lay-verify="required" autocomplete="off" placeholder="请输入原始密码" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">新密码</label>
+                <div class="layui-input-block">
+                    <input type="password" name="newPassword" lay-verify="required" autocomplete="off" placeholder="请输入新密码" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">确认新密码</label>
+                <div class="layui-input-block">
+                    <input type="password" name="reNewPassword" lay-verify="required|repwd" autocomplete="off" placeholder="请再次输入新密码" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block modify-btn">
+                    <button class="layui-btn" lay-submit="" lay-filter="modify">确认修改</button>
+                    <a class="layui-btn layui-btn-primary" href="javascript:$('.modify').hide()">取消</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/jquery.print.js"></script>
+    <!--<script type="text/javascript" src="js/address.min.js"></script>-->
+    <script type="text/javascript" src="layui/layui.js"></script>
+    <script type="text/javascript" src="js/common.js"></script>
+    <script type="text/javascript" src="js/function.js"></script>
+    <script type="text/javascript" src="js/pintuer.js"></script>
+    <script type="text/javascript" src="vuejs/vue.min.js"></script>
+    <script type="text/javascript">
+        layui.use('form', function() {
+            var form = layui.form;
+
+            form.on('submit(modify)', function(obj) {
+                var data = obj.field;
+                data.loginName = user_ctrl.uname;
+                data.userToken = loader.getCookie('token');
+                layer.load();
+                fun.post(loader.baseurl + '/user/changepwd', data, function(res) {
+                    layer.closeAll('loading');
+                    layer.alert(res.msg, {
+                        icon: res.code,
+                        end: function() {
+                            if (res.code == 1) {
+                                loader.clearCookie();
+                                loader.UnloadConfirm.clear();
+                                location.href = 'login.html';
+                            }
+                        }
+                    })
+                });
+                return false;
+            });
+
+            form.verify({
+                repwd: function(val, el) {
+                    var pwd = $('input[name=newPassword]').val();
+                    if ($.trim(val) != $.trim(pwd)) {
+                        return '两次新密码输入不一致';
+                    }
+                }
+            });
+        })
+
+        var user_ctrl = new Vue({
+            el: "#index",
+            data: {
+                uname: '',
+            },
+            methods: {
+                logout: function() {
+                    var param = {
+                        userToken: loader.getCookie('token')
+                    };
+                    fun.post(loader.baseurl + '/layout', param, function(res) {
+                        if (res.code != 1) {
+                            layer.msg(res.msg);
+                        } else {
+                            var wait = function(deferred) {
+                                loader.clearCookie();
+                                loader.UnloadConfirm.clear();
+                                deferred.resolve();
+                            }
+                            jQuery.Deferred(wait).done(function() {
+                                location.href = 'login.html';
+                            });
+                        }
+                    });
+                },
+                modify: function() {
+                    $('.modify').show();
+                },
+                home:function(){
+                	loader.load('#admin_container','home.html');
+                }
+            },
+            created: function() {
+
+            },
+            mounted: function() {
+
+            }
+        });
+
+        document.onreadystatechange = function() {
+            if (document.readyState == 'complete') {
+                loader.init();
+                user_ctrl.uname = loader.getCookie('uname');
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,339 @@
+<style type="text/css">
+    .layui-form-label {
+        width: 125px;
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    .layui-this {
+        background: #1184c3 !important;
+    }
+    
+    .layui-input-block {
+        margin-left: 190px !important;
+    }
+    
+    .remark {
+        width: 840px !important;
+    }
+    
+    .layui-form-selectup dl {
+        bottom: initial !important;
+    }
+</style>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>编辑法院基本支付信息</strong>
+    </div>
+    <div class="panel-body" id="edit_ctrl">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">付款账号开户行</label>
+                <div class="layui-input-inline not">
+                    <input type="hidden" name="paymentDepositBank" v-model="income.paymentDepositBank" />
+                    <select name="" lay-filter="bank" v-model="income.paymentNumber">
+				        <option value="" disabled="disabled" selected="selected">请选择开户行</option>
+				        <option v-for='item in bank' :value="item.bankAccount">{{item.bankName}}</option>
+			      	</select>
+                </div>
+                <label class="layui-form-label">付款账号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="paymentNumber" disabled="disabled" v-model="income.paymentNumber" lay-verify="required" autocomplete="off" placeholder="请输入付款账号" class="layui-input">
+                </div>
+                <label class="layui-form-label">付款账号名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="paymentName" v-model="income.paymentName" lay-verify="required" autocomplete="off" placeholder="请输入付款账号名称" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">收款账号开户行</label>
+                <div class="layui-input-inline not">
+                    <select name="receivablesDepositBank" v-model="income.receivablesDepositBank" lay-filter="incomebank" lay-verify="required">
+				        <option value="" selected="selected" disabled="disabled">请选择收款账号开户行</option>
+				        <option value="中国工商银行" data-industry="true">中国工商银行</option>
+				        <option value="中国建设银行" data-industry="">中国建设银行</option>
+				        <option value="中国人民银行" data-industry="">中国人民银行</option>
+				        <option value="中国银行" data-industry="">中国银行</option>
+				        <option value="中国农业银行" data-industry="">中国农业银行</option>
+				        <option value="中国光大银行" data-industry="">中国光大银行</option>
+				        <option value="中国民生银行" data-industry="">中国民生银行</option>
+				        <option value="中国邮政银行" data-industry="">中国邮政银行</option>
+				        <option value="中国交通银行" data-industry="">中国交通银行</option>
+      				</select>
+                </div>
+                <label class="layui-form-label">收款账号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="receivablesNumber" v-model="income.receivablesNumber" lay-verify="required" autocomplete="off" placeholder="请输入收款账号" class="layui-input">
+                </div>
+                <label class="layui-form-label">收款账号名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="receivablesAccountName" v-model="income.receivablesAccountName" lay-verify="income_name|required" autocomplete="off" placeholder="请输入收款账号名称" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">收款账号省份</label>
+                <div class="layui-input-inline">
+                    <input type="hidden" name="receivablesProvince" v-model="income.receivablesProvince" />
+                    <select name="" id="province" lay-filter="province" :disabled="industry" lay-verify="province">
+				        <option value="" selected="selected" disabled="disabled">请选择省份</option>
+				        <option :value="item.id" v-for="item in provinces">{{item.province}}</option>
+      				</select>
+                </div>
+                <label class="layui-form-label">收款账号城市</label>
+                <div class="layui-input-inline">
+                    <input type="hidden" name="receivablesCity" v-model="income.receivablesCity" />
+                    <select name="" id="city" :disabled="industry" lay-filter="city" lay-verify="city" v-model="income.receivablesAreaCode">
+				        <option value="" selected="selected" disabled="disabled">请选择城市</option>
+				        <option :value="item.areaCode" v-for="item in citys">{{item.name}}</option>
+      				</select>
+                </div>
+                <label class="layui-form-label">收款账号地区码</label>
+                <div class="layui-input-inline">
+                    <input name="receivablesAreaCode" disabled="disabled" v-model="income.receivablesAreaCode" readonly="readonly" placeholder="收款账号地区码" class="layui-input" />
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">案号</label>
+                <div class="layui-input-inline not">
+                    <input type="hidden" name="caseNumber" v-model="income.caseNumber" />
+                    <select name="caseId" lay-verify="caseNumber" v-model="income.caseId" lay-filter="caseNumber">
+				        <option value="" disabled="disabled" selected="selected">请选择案号</option>
+				        <option v-for='item in cases' :value="item.id" :data-balance="item.balance">{{item.caseNumber}}</option>
+			      	</select>
+                </div>
+                <label class="layui-form-label">余额</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="balance" v-model="income.balance" disabled="disabled" class="layui-input">
+                </div>
+                <label class="layui-form-label">案件日期</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="date" id="date" v-model="income.date" lay-verify="required" autocomplete="off" placeholder="请输入案件日期" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">案件金额</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="amount" lay-verify="money|required" v-model="income.amount" autocomplete="off" placeholder="请输入案件金额" class="layui-input">
+                </div>
+                <label class="layui-form-label">汇款用途</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="remittancePurpose" v-model="income.remittancePurpose" lay-verify="required" autocomplete="off" placeholder="汇款用途" class="layui-input">
+                </div>
+                <label class="layui-form-label">币种</label>
+                <div class="layui-input-inline">
+                    <select name="currency" v-model="income.currency" lay-verify="required" disabled="disabled">
+				        <option value="RMB" selected="" disabled="disabled">人民币（RMB）</option>
+      				</select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">明细标志</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="detailTitle" lay-verify="" v-model="income.detailTitle" autocomplete="off" placeholder="请输入明细标志" class="layui-input">
+                </div>
+                <label class="layui-form-label">汇款方式</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="remittanceMode" v-model="income.remittanceMode" lay-verify="required" autocomplete="off" placeholder="请输入汇款方式" class="layui-input">
+                </div>
+                <label class="layui-form-label">收款账号手机号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="receivablesPhone" v-model="income.receivablesPhone" lay-verify="" autocomplete="off" placeholder="请输入收款账号手机号" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">备注信息</label>
+                <div class="layui-input-inline remark">
+                    <textarea placeholder="请输入内容" v-model="income.remarks" name="remarks" class="layui-textarea"></textarea>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit="" lay-filter="edit">确认修改</button>
+                    <a class="layui-btn layui-btn-primary" href="javascript:loader.load('#admin_container','data_income_spending.html')">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    layui.use(['form', 'laydate'], function() {
+        var form = layui.form,
+            laydate = layui.laydate;
+
+        $(document).on('propertychange input', '.not input', function() {
+            var value = $(this).val();
+            $('input[name=balance]').val('0.00');
+            $(this).closest('.not').children(':first-child').val(value);
+            var dds = $(this).parent().next().children();
+            dds.hide();
+            dds.each(function(i, e) {
+                if ($(e).text().indexOf(value) != -1) {
+                    $(e).show();
+                }
+            });
+        });
+
+        form.on('select(province)', function(data) {
+            var obj = edit_ctrl.provinces[parseInt(data.value) - 1];
+            edit_ctrl.income.receivablesProvince = obj.province;
+            edit_ctrl.citys = obj.citys;
+            $('select[name=receivablesCity]').val('');
+            //          form.render('select');
+        });
+
+        form.on('select(city)', function(data) {
+            var item = $(data.elem).find('option:selected');
+            edit_ctrl.income.receivablesAreaCode = data.value;
+            edit_ctrl.income.receivablesCity = item.text();
+        });
+
+        form.on('select(caseNumber)', function(data) {
+            var item = $(data.elem).find('option:selected');
+            edit_ctrl.income.caseNumber = item.text();
+            edit_ctrl.income.balance = item.data('balance');
+            edit_ctrl.income.caseId = data.value;
+        });
+
+        form.on('select(bank)', function(data) {
+            console.log(edit_ctrl.income);
+            var item = $(data.elem).find('option:selected');
+            edit_ctrl.income.paymentNumber = data.value; //防止动态改变value，vue不触发更新
+            edit_ctrl.income.paymentDepositBank = item.text();
+        });
+
+        //监听是否选择工商银行
+        form.on('select(incomebank)', function(data) {
+            var item = $(data.elem).find('option:selected');
+            edit_ctrl.income.receivablesDepositBank = data.value; //防止vue更新渲染造成数据还原
+            if (item.data('industry')) {
+                edit_ctrl.industry = false;
+            } else {
+                edit_ctrl.income.receivablesAreaCode = '0000'
+                $('select#province').val('').prev().val('');
+                $('select#city').val('').prev().val('');
+                edit_ctrl.industry = 'disabled';
+            }
+        });
+
+        form.verify({
+            //          caseNumber: function(val, el) {
+            //              if ($.trim(val) == '' || $.trim(val) == null || $.trim(val) == undefined)
+            //                  return '案件编号必须填写！';
+            //          },
+            money: function(val, el) {
+                if ($.trim(val) == '' || $.trim(val) == null || $.trim(val) == undefined)
+                    return '案件金额必须填写！';
+            },
+            province: function(val, el) {
+                if ($.trim(val) == null || $.trim(val) == '' || $.trim(val) == undefined) {
+                    return '请选择收款帐号省份';
+                }
+            },
+            city: function(val, el) {
+                if ($.trim(val) == null || $.trim(val) == '' || $.trim(val) == undefined) {
+                    return '请选择收款帐号城市';
+                }
+            }
+        });
+
+        form.on('submit(edit)', function(obj) {
+            var data = obj.field;
+            data.userToken = loader.getCookie('token');
+            data.id = edit_ctrl.income.id;
+            layer.load();
+            fun.post(loader.baseurl + '/courtPayOrder/edit', data, function(res) {
+                layer.closeAll('loading');
+                if (typeof(res) == 'object') {
+                    if (res.code == 1) {
+                        layer.msg(res.msg, {
+                            icon: 1,
+                            end: function() {
+                                loader.load('#admin_container', 'data_income_spending.html');
+                            }
+                        });
+                    } else {
+                        layer.alert(res.msg, {
+                            icon: 2,
+                            end: function(i) {
+                                //                              obj.form.reset();
+                                layer.close(i);
+                            }
+                        });
+                    }
+                }
+            })
+            return false;
+        });
+
+        edit_ctrl = new Vue({
+            el: "#edit_ctrl",
+            data: {
+                income: loader.temp_data,
+                provinces: [],
+                citys: [],
+                bank: [],
+                cases: [],
+                industry: 'disabled'
+            },
+            created: function() {
+                var that = this;
+                fun.get(loader.baseurl + '/case/havingBalance', {
+                    userToken: loader.getCookie('token')
+                }, function(res) {
+                    if (res) that.cases = res.data;
+                });
+                fun.get(loader.baseurl + '/areaCode/list', {
+                    province: ''
+                }, function(rs) {
+                    if (rs) that.provinces = rs.data;
+                });
+                fun.get(loader.baseurl + '/bankManager/list', {}, function(rs) {
+                    if (rs) that.bank = rs.data;
+                });
+            },
+            mounted: function() {
+                if (this.industry) {
+                    var item = $('select[name=receivablesDepositBank]').find('option:selected');
+                    if (item.data('industry')) this.industry = false;
+                }
+            },
+            updated: function() {
+                var balance = $('select[name=caseId]').find('option:selected').data('balance'); //显示余额
+                if (!edit_ctrl.income.balance) {
+                    edit_ctrl.income.balance = balance || '0.0';
+                }
+                form.render('select');
+                $('div.not input').removeAttr('readonly');
+                $('div.not').each(function(i, el) {
+                    $(el).find('.layui-select-title input').val($(el).children(':first-child').val());
+                });
+            }
+        });
+
+        //观察者
+        edit_ctrl.$watch('provinces', function(newValue, oldValue) {
+            $('select#province').find('option').each(function(i, el) {
+                if (edit_ctrl.income.receivablesProvince.toString() === $(el).text().toString()) {
+                    $(el).attr('selected', 'selected');
+                    var obj = edit_ctrl.provinces[parseInt($(el).val()) - 1];
+                    edit_ctrl.citys = obj.citys;
+                }
+            });
+            form.render('select');
+        });
+
+        laydate.render({
+            elem: '#date'
+        });
+
+        form.render();
+
+
+    });
+</script>

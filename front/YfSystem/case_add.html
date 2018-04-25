@@ -1,0 +1,139 @@
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    .layui-this {
+        background: #1184c3 !important;
+    }
+</style>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>新增个案</strong>
+    </div>
+    <div class="panel-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item" style="margin-top: 10px;">
+                <label class="layui-form-label">案件编号</label>
+                <div class="layui-input-block">
+                    <input type="text" name="caseNumber" lay-verify="" autocomplete="off" placeholder="请输入案件编号" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">款项性质</label>
+                <div class="layui-input-block" id="nature">
+                    <input type="hidden" name="moneyNatureCode" value="" />
+                    <input type="hidden" name="moneyNatureName" value="" />
+                    <select name="moneyNatureId" lay-filter="nature">
+                    	<option value="" disabled="disabled" selected="selected">请选择款项性质</option>
+				        <option v-for="item in subNames" :data-code="item.s_code" :value="item.id">{{item.s_name}}</option>
+      				</select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">应收金额</label>
+                <div class="layui-input-block">
+                    <input type="text" name="receivableAmount" lay-verify="number" autocomplete="off" placeholder="请输入应收金额" class="layui-input">
+                </div>
+            </div>
+            <!-- <div class="layui-form-item">
+                <label class="layui-form-label">差额</label>
+                <div class="layui-input-block">
+                    <input type="text" name="diffAmount" lay-verify="number" autocomplete="off" placeholder="请输入差额" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">实收金额</label>
+                <div class="layui-input-block">
+                    <input type="text" name="actualAmount" lay-verify="number" autocomplete="off" placeholder="请输入实收金额" class="layui-input">
+                </div>
+            </div> -->
+            <!-- <div class="layui-form-item">
+                <label class="layui-form-label">选择处理状态</label>
+                <div class="layui-input-block">
+                    <select name="processStatus">
+                    	<option value="" disabled="disabled" selected="selected">请选择处理状态</option>
+				        <option value="1">催收</option>
+				        <option value="2">正在收款</option>
+				        <option value="3">移送执行</option>
+                        <option value="4">坏账处理</option>
+      				</select>
+                </div>
+            </div> -->
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit="" lay-filter="addcase">确认提交</button>
+                    <a class="layui-btn layui-btn-primary" href="javascript:loader.load('#admin_container','case_list.html')">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    layui.use(['form', 'laydate'], function() {
+        var form = layui.form,
+            laydate = layui.laydate;
+
+        form.on('submit(addcase)', function(obj) {
+            var data = obj.field;
+            data.userToken = loader.getCookie('token');
+            layer.load();
+            fun.post(loader.baseurl + '/case/add', data, function(res) {
+                layer.closeAll('loading');
+                if (typeof(res) == 'object') {
+                    if (res.code == 1) {
+                        layer.msg(res.msg, {
+                            icon: 1,
+                            end: function() {
+                                $(obj.elem).next().get(0).click();
+                            }
+                        });
+                    } else {
+                        var msg = res.msg || '新增个案失败!';
+                        layer.alert(msg, {
+                            icon: 2
+                        }, function(i) {
+                            // obj.form.reset();
+                            layer.close(i);
+                        });
+                    }
+                }
+            })
+            return false;
+        });
+
+        form.on('select(nature)', function(obj) {
+            var nature = $(obj.elem).find('option:selected');
+            $(obj.elem).prev().val(nature.text()).prev().val(nature.data('code'));
+        })
+
+        var nature = new Vue({
+            el: '#nature',
+            data: {
+                subNames: []
+            },
+            mounted: function() {
+                var that = this;
+                fun.get(loader.baseurl + '/subject/getSubjectMj', {
+                    userToken: loader.getCookie('token')
+                }, function(rs) {
+                    that.subNames = rs.data;
+                });
+            },
+            updated: function() {
+                form.render('select');
+            }
+        })
+
+        form.render();
+
+    });
+</script>

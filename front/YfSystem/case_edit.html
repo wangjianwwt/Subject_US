@@ -1,0 +1,154 @@
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    .layui-this {
+        background: #1184c3 !important;
+    }
+</style>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>编辑个案</strong>
+    </div>
+    <div class="panel-body" id="edit_ctrl">
+        <form class="layui-form" action="" style="margin-top: 10px;">
+            <div class="layui-form-item">
+                <label class="layui-form-label">案件编号</label>
+                <div class="layui-input-block">
+                    <input type="text" name="caseNumber" v-if="!casedata.createChannel" v-model="casedata.caseNumber" lay-verify="" autocomplete="off" placeholder="请输入案件编号" class="layui-input">
+                    <input type="text" name="caseNumber" v-if="casedata.createChannel" disabled="disabled" v-model="casedata.caseNumber" lay-verify="" autocomplete="off" placeholder="请输入案件编号" class="layui-input">
+                </div>
+            </div>
+            <!--<div class="layui-form-item">
+                <label class="layui-form-label">款项性质编码</label>
+                <div class="layui-input-block">
+                    <input type="text" name="moneyNatureCode" v-model="casedata.moneyNatureCode" lay-verify="" autocomplete="off" placeholder="请输入款项性质编码" class="layui-input">
+                </div>
+            </div>-->
+            <div class="layui-form-item">
+                <label class="layui-form-label">款项性质</label>
+                <div class="layui-input-block">
+                    <input type="hidden" name="moneyNatureCode" value="" v-model="casedata.moneyNatureCode" />
+                    <input type="hidden" name="moneyNatureName" value="" v-model="casedata.moneyNatureName" />
+                    <!--<select v-if="!casedata.createChannel" name="moneyNatureId" lay-filter="nature" v-model="casedata.moneyNatureId">-->
+                    <select v-if="" name="moneyNatureId" lay-filter="nature" v-model="casedata.moneyNatureId">
+                    	<option value="" disabled="disabled" selected="selected">{{casedata.moneyNatureName}}</option>
+				        <option v-for="item in subNames" :data-code="item.s_code" :value="item.id">{{item.s_name}}</option>
+      				</select>
+                    <!--<select v-if="casedata.createChannel" disabled="disabled" name="moneyNatureId" lay-filter="nature" v-model="casedata.moneyNatureId">
+                    	<option value="" disabled="disabled" selected="selected">{{casedata.moneyNatureName}}</option>
+				        <option v-for="item in subNames" :data-code="item.s_code" :value="item.id">{{item.s_name}}</option>
+      				</select>-->
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">应收金额</label>
+                <div class="layui-input-block">
+                    <input type="text" name="receivableAmount" v-model="casedata.receivableAmount" lay-verify="number" autocomplete="off" placeholder="请输入应收金额" class="layui-input">
+                </div>
+            </div>
+            <!--<div class="layui-form-item">
+                <label class="layui-form-label">差额</label>
+                <div class="layui-input-block">
+                    <input type="text" name="diffAmount" v-model="casedata.diffAmount" lay-verify="number" autocomplete="off" placeholder="请输入差额" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">实收金额</label>
+                <div class="layui-input-block">
+                    <input type="text" name="actualAmount" v-model="casedata.actualAmount" lay-verify="number" autocomplete="off" placeholder="请输入实收金额" class="layui-input">
+                </div>
+            </div>-->
+            <div class="layui-form-item">
+                <label class="layui-form-label">选择处理状态</label>
+                <div class="layui-input-block">
+                    <select name="processStatus" v-model="casedata.processStatus" lay-filter="processStatus">
+				        <option value="" disabled="disabled" selected="selected">请选择处理状态</option>
+				        <option value="1">催收</option>
+				        <option value="2">正在收款</option>
+				        <option value="3">移送执行</option>
+                        <option value="4">坏账处理</option>
+                        <option value="5">正常结算</option>
+      				</select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit="" lay-filter="editcase">确认修改</button>
+                    <a class="layui-btn layui-btn-primary" href="javascript:loader.load('#admin_container','case_list.html')">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    layui.use(['form', 'laydate'], function() {
+        var form = layui.form,
+            laydate = layui.laydate;
+
+        form.on('submit(editcase)', function(obj) {
+            var data = obj.field;
+            data.userToken = loader.getCookie('token');
+            data.id = edit_ctrl.casedata.id;
+            layer.load();
+            fun.post(loader.baseurl + '/case/edit', data, function(res) {
+                layer.closeAll('loading');
+                if (typeof(res) == 'object') {
+                    if (res.code == 1) {
+                        layer.msg(res.msg, {
+                            icon: 1,
+                            end: function() {
+                                $(obj.elem).next().get(0).click();
+                            }
+                        });
+                    } else {
+                        var msg = res.msg || '编辑个案失败!';
+                        layer.alert(msg, {
+                            icon: 2
+                        }, function(i) {
+                            layer.close(i);
+                        });
+                    }
+                }
+            })
+            return false;
+        });
+
+        form.on('select(nature)', function(obj) {
+            var nature = $(obj.elem).find('option:selected');
+            $(obj.elem).prev().val(nature.text()).prev().val(nature.data('code'));
+        })
+
+
+        edit_ctrl = new Vue({
+            el: "#edit_ctrl",
+            data: {
+                casedata: loader.temp_data,
+                subNames: []
+            },
+            created: function() {
+                var that = this;
+                fun.get(loader.baseurl + '/subject/getSubjectMj', {
+                    userToken: loader.getCookie('token')
+                }, function(rs) {
+                    that.subNames = rs.data;
+                });
+            },
+            updated: function() {
+                form.render('select');
+            }
+        });
+
+        form.render();
+
+    });
+</script>

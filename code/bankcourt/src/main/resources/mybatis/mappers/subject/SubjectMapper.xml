@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.born.bc.subject.dao.SubjectMapper">
+
+	<select id="getSubjectList" resultType="com.born.bc.subject.entity.Subject">
+		select * from t_subject
+	</select>
+	
+	<select id="getSubjectMj" resultType="com.born.bc.subject.entity.Subject">
+		SELECT * FROM t_subject s WHERE 
+		s.S_CODE NOT IN
+		(SELECT PARENT_ID FROM t_subject WHERE PARENT_ID IS NOT NULL OR PARENT_ID &lt;&gt; '')
+		AND s.S_CODE LIKE CONCAT((SELECT s_code FROM t_subject WHERE s_name='银行存款'),'%') 
+	</select>
+	
+	<select id="getSubjectBycode" parameterType="com.born.bc.subject.entity.Subject" resultType="com.born.bc.subject.entity.Subject">
+		select * from t_subject where S_CODE=#{s_code}
+	</select>
+	
+	
+	<update id="updateSubject" parameterType="com.born.bc.subject.entity.Subject" >
+    	UPDATE t_subject SET
+    	 S_CODE=#{s_code},
+    	 S_NAME=#{s_name},
+    	 PARENT_ID=#{parent_id},
+    	 type=#{type},
+    	 qcs=#{qcs}
+    	WHERE id=#{id}
+   </update>
+   
+   <select id="getSubjectByParent" parameterType="java.lang.String" resultType="com.born.bc.subject.entity.Subject">
+		SELECT * FROM t_subject WHERE PARENT_ID=(SELECT	s_code FROM t_subject WHERE id=#{id})
+	</select>
+   
+   <delete id="deleteSubject" parameterType="java.lang.String">
+   		DELETE FROM t_subject WHERE id=#{id}
+   </delete>
+   
+   <select id="getListBySujectId" parameterType="String" resultType="String">
+		SELECT * FROM(
+		SELECT SUBJECT_ID FROM t_dt_inter_pay WHERE IS_SPLIT = 0
+		UNION ALL	
+		SELECT SUBJECT_ID FROM t_dt_pos_pay)a WHERE SUBJECT_ID=#{id}
+	</select>
+   
+   
+   <select id="isChange" parameterType="String" resultType="com.born.bc.subject.entity.ChangeHistory">
+		SELECT * FROM chanhe_history where subjectCode=#{subjectCode}
+	</select>
+
+
+	<insert id="addSubject" parameterType="com.born.bc.subject.entity.Subject">
+        insert into t_subject
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                ID,
+            </if>
+            <if test="s_code != null">
+                S_CODE,
+            </if>
+            <if test="s_name != null">
+                S_NAME,
+            </if>
+            <if test="parent_id != null">
+                PARENT_ID,
+            </if>
+            <if test="type != null">
+                type
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="s_code != null">
+                #{s_code,jdbcType=VARCHAR},
+            </if>
+            <if test="s_name != null">
+                #{s_name,jdbcType=VARCHAR},
+            </if>
+            <if test="parent_id != null">
+                #{parent_id,jdbcType=VARCHAR},
+            </if>
+            <if test="type != null">
+                #{type,jdbcType=VARCHAR}
+            </if>
+        </trim>
+    </insert>
+    
+    
+    <insert id="addChangeHistory" parameterType="com.born.bc.subject.entity.ChangeHistory">
+        insert into chanhe_history
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="before_name != null">
+                before_name,
+            </if>
+            <if test="after_name != null">
+                after_name,
+            </if>
+            <if test="changeDate != null">
+                changeDate,
+            </if>
+            <if test="ncs != null">
+                ncs,
+            </if>
+            <if test="qms != null">
+                qms,
+            </if>
+            <if test="qcs != null">
+                qcs,
+            </if>
+            <if test="subjectCode != null">
+                subjectCode
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="before_name != null">
+                #{before_name,jdbcType=VARCHAR},
+            </if>
+            <if test="after_name != null">
+                #{after_name,jdbcType=VARCHAR},
+            </if>
+            <if test="changeDate != null">
+                #{changeDate,jdbcType=VARCHAR},
+            </if>
+            <if test="ncs != null">
+                #{ncs,jdbcType=VARCHAR},
+            </if>
+            <if test="qms != null">
+                #{qms,jdbcType=VARCHAR},
+            </if>
+            <if test="qcs != null">
+                #{qcs,jdbcType=VARCHAR},
+            </if>
+            <if test="subjectCode != null">
+                #{subjectCode,jdbcType=VARCHAR}
+            </if>
+        </trim>
+    </insert>
+</mapper>

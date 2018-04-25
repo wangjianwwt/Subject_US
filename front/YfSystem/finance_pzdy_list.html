@@ -1,0 +1,175 @@
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    
+    .layui-table-cell {
+        height: auto !important
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    #tree_box {
+        border: solid 1px #C2C2C2;
+        position: absolute !important;
+        height: auto;
+        overflow: auto;
+        z-index: 9999 !important;
+        background: white;
+        width: 100%;
+        margin-top: 3px;
+        overflow-x: scroll;
+        display: none;
+    }
+    
+    .sub {
+        position: relative;
+    }
+    
+    .layui-tree li {
+        overflow: inherit !important;
+    }
+    
+    #tree {
+        cursor: pointer;
+    }
+    
+    form {
+        padding-top: 15px !important;
+        padding-left: 15px !important;
+    }
+    
+    .panel {
+        margin-bottom: 10px;
+        overflow: initial;
+    }
+    
+    .panel-body {
+        overflow: initial !important;
+    }
+    
+    .layui-form-item .layui-input-inline {
+        width: auto !important;
+    }
+</style>
+<script type="text/html" id="num_tpl">
+    {{loader.send_data++}}
+</script>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>财务处理</strong>
+    </div>
+    <div class="panel-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <div class="layui-input-inline">
+                    <input type="text" name="transactionTime" id="time" autocomplete="off" placeholder="选择时间" class="layui-input">
+                </div>
+                <div class="layui-input-inline">
+                    <button type="submit" class="button bg-yellow" lay-submit='' lay-filter="query">查询</button>
+                    <a class="button bg-green" href="javascript:print_data()" >打印</a>
+                    <!-- <a class="button bg-mix" href="javascript:loader.load('#admin_container','finance_pzdy_list.html')">刷新</a> -->
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="testDy">
+    <table lay-filter="" id="list"></table>
+</div>
+<script type="text/javascript">
+    layui.use(['form', 'table', 'laydate'], function() {
+        var form = layui.form,
+            table = layui.table,
+            laydate = layui.laydate;
+        loader.send_data = 1;
+        var time = new Date();
+        var dt = time.getFullYear()+'-'+(time.getMonth()+1)+'-'+time.getDate();
+
+        var config = {
+            elem: '#list',
+            where: {
+                userToken: loader.getCookie('token'),
+                transactionTime: dt
+            },
+            url: loader.baseurl + '/pzcx/getPzcxList',
+            page: true,
+            limit: 10,
+            cols: [
+                [{
+                    width: 80,
+                    title: '序号',
+                    fixed: 'left',
+                    templet: '#num_tpl'
+                }, {
+                    field: 'transactionTime',
+                    width: 200,
+                    title: '日期'
+                }, {
+                    field: 'subjectName',
+                    width: 200,
+                    edit: 'text',
+                    title: '科目名称'
+                }, {
+                    field: 'caseNumber',
+                    width: 200,
+                    title: '案号'
+                }, {
+                    field: 'corporateName',
+                    width: 250,
+                    title: '摘要'
+                }, {
+                    field: 'debitPrice',
+                    width: 200,
+                    title: '借方发生额'
+                }, {
+                    field: 'creditPrice',
+                    width: 200,
+                    title: '贷方发生额'
+                }]
+            ],
+            response: {
+                statusCode: 1,
+            },
+            done: function(res) {
+                loader.send_data = 1;
+                loader.fail(res);
+            }
+        };
+
+        var list = table.render(config); //默认
+
+
+        //数据筛选
+        form.on('submit(query)', function(obj) {
+            obj.field.userToken = loader.getCookie('token');
+            config.where = obj.field;
+            list.reload(config);
+            return false;
+        });
+
+		window.print_data = function(){
+			var tab_head = $('.layui-table-view').children(':first').find('thead');
+			var data_box = $('.layui-table-body.layui-table-main');
+			var content = $('body').children().detach();
+			data_box.children(':first').prepend(tab_head);
+			data_box.css('width',$('body').width());
+			$('body').append(data_box);
+			window.print();
+			$('body').empty().append(content);
+            list.reload(config);
+        }
+
+        laydate.render({
+            elem: '#time',
+            value: new Date()
+        });
+        form.render();
+    });
+
+</script>

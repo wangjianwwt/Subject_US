@@ -1,0 +1,117 @@
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    .allot-btn {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .list-box {
+        padding: 0px 20px;
+        box-sizing: border-box;
+        text-align: center;
+    }
+    
+    .list-box .box {
+        display: inline-block;
+        margin: 10px 12px
+    }
+</style>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>角色权限分配</strong>
+    </div>
+    <div class="panel-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item" id="allot">
+                <div class="list-box">
+                    <div class="box" v-for="item in allots">
+                        <input type="checkbox" name="allot" :value="item.permissionId" v-if="!item.isLinked" :title="item.permissionName">
+                        <input type="checkbox" name="allot" :value="item.permissionId" v-if="item.isLinked" checked="checked" :title="item.permissionName">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="panel-foot allot-btn">
+        <button type="submit" lay-submit="" class="button bg-main" lay-filter="allot">更新权限</button>
+        <a class="button bg-green" href="javascript:loader.load('#admin_container','ability_role_list.html')">返回</a>
+    </div>
+</div>
+<script type="text/javascript">
+    layui.use(['form'], function() {
+        var form = layui.form;
+
+        form.on('checkbox', function() {
+            allot.flag = true;
+        })
+
+        form.on('submit(allot)', function(obj) {
+            var userToken = loader.getCookie('token');
+            allot.ids = [];
+            $('input[type=checkbox]:checked').each(function(i, el) {
+                allot.ids.push($(el).val());
+            });
+            if (!allot.flag) {
+                layer.alert('抱歉,你未做任何修改!', {
+                    icon: 4
+                });
+                return false;
+            }
+            layer.load();
+            var data = {
+                id: loader.temp_data.id,
+                permissions: allot.ids,
+                userToken: userToken
+            };
+            fun.post(loader.baseurl + '/role/updateRoleLinkedPermissions', data, function(rs) {
+                layer.closeAll('loading');
+                allot.flag = false;
+                if (rs.code == 1) {
+                    layer.msg(res.msg, {
+                        icon: 1,
+                        end: function() {
+                            //          			loader.load('#admin_container', 'ability_role_allot.html');
+                        }
+                    });
+                } else {
+                    layer.alert(res.msg, {
+                        icon: 2
+                    });
+                }
+            });
+            return false;
+        });
+
+        var allot = new Vue({
+            el: '#allot',
+            data: {
+                allots: [],
+                ids: [],
+                flag: false
+            },
+            mounted: function() {
+                var that = this;
+                var data = {
+                    roleId: loader.temp_data.id
+                };
+                fun.get(loader.baseurl + '/permission/getPermissionByRole', data, function(rs) {
+                    if (rs) that.allots = rs.data;
+                })
+            },
+            updated: function() {
+                form.render();
+            }
+        })
+
+    });
+</script>

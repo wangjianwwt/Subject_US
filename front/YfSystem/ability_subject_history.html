@@ -1,0 +1,91 @@
+<style type="text/css">
+    .layui-form-label {
+        width: auto;
+    }
+    
+    span#total {
+        float: right;
+        padding: 0px 5px;
+        line-height: 18px;
+        margin-top: 10px;
+    }
+    
+    .layui-table-cell {
+        height: auto !important
+    }
+</style>
+<script type="text/html" id="num_tpl">
+    {{loader.send_data++}}
+</script>
+<div class="panel admin-panel">
+    <div class="panel-head">
+        <strong><span class="icon-pencil-square-o"></span>科目名称修改历史记录</strong>
+    </div>
+    <div class="panel-head">
+        <a class="button bg-main" href="javascript:loader.load('#admin_container','ability_subject_list.html')">返回科目维护</a>
+    </div>
+</div>
+
+<table id="list" lay-filter="case"></table>
+
+<script type="text/javascript">
+    layui.use(['form', 'table', 'laydate'], function() {
+        var form = layui.form,
+            table = layui.table,
+            laydate = layui.laydate;
+        form.render();
+        loader.send_data = 1;
+
+        var config = {
+            elem: '#list',
+            where: {
+                userToken: loader.getCookie('token'),
+                subjectCode:loader.temp_data.scode
+            },
+            url: loader.baseurl + '/subject/isChange',
+            page: true,
+            limit: 10,
+            cols: [
+                [{
+                    fixed: 'left',
+                    templet: '#num_tpl',
+                    width: 60,
+                    title: '序号'
+                }, {
+                    field: 'subjectCode',
+                    width: 200,
+                    title: '科目编码',
+                    sort: true
+                }, {
+                    field: 'before_name',
+                    width: 250,
+                    title: '原名',
+                    sort: true
+                }, {
+                    field: 'after_name',
+                    width: 250,
+                    title: '改名',
+                    sort: true
+                }, {
+                    field: 'qcs',
+                    width: 200,
+                    title: '期初数'
+                }, {
+                    field: 'changeDate',
+                    width: 200,
+                    title: '修改时间'
+                }]
+            ],
+            response: {
+                statusCode: 1,
+            },
+            done: function() {
+                loader.send_data = 1;
+            }
+        };
+
+        var user_list = table.render(config);
+
+
+    });
+</script>
